@@ -16,6 +16,10 @@
 
 #let wider = h(3em)
 
+= TODO
+
+- Change from semi-discrete formulation to functional analysis formulation
+
 = Introduction
 
 This report describes methods and implementations from the field of inverse problems and regularisation theory as applied to the determination of the radial magnetic field of Earth's surface and subsurface using data from ESA's _Swarm_ satellite mission recorded between XXX - YYY.
