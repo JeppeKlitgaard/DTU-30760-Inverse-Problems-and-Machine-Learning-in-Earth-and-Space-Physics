@@ -28,6 +28,9 @@ ipympl = ">=0.10.0,<0.11"
 ffmpeg = ">=8.0.1,<9"
 polars = ">=1.38.1,<2"
 tqdm = ">=4.67.3,<5"
+ipykernel = "<7"
+numba = ">=0.64.0,<0.65"
+ipython = ">=9.11.0,<10"
 
 [pypi-dependencies]
 chaosmagpy = ">=0.13.1, <0.14"

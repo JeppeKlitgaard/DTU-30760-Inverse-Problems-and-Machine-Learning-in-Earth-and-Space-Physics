@@ -8,19 +8,49 @@ import chaosmagpy as cp
 RADIUS_EARTH = 6371.2  # Earth radius in km
 RADIUS_CORE = 3480.0  # Core radius in km
 
-
-# Given in assignment
-# Global plot with polar areas
 def plot_global(
-    lon, lat, data, point_size, title="", cbar_label="", cmap=None, limit=None
+    lon,
+    lat,
+    data,
+    point_size,
+    title="",
+    cbar_label="",
+    cmap=None,
+    limit=None,
+    half_page: bool = False,
 ):
-    if limit == None:
-        limit = np.max(abs(data))
+    if limit is None:
+        limit = np.max(np.abs(data))
     else:
-        limit = np.max(abs(np.array(limit)))
-    # create figure
-    fig = plt.figure(figsize=(9, 5))
-    # make array of axes
+        limit = np.max(np.abs(np.array(limit)))
+
+    if half_page:
+        fig = plt.figure(figsize=(4.0, 4.0 * 0.62))
+        grid_lw = 0.35
+        coast_lw = 0.35
+        cax_width = "50%"
+        cax_height = "12%"
+        cax_borderpad = -5
+        cbar_label_size = 8
+        cbar_tick_size = 7
+        title_size = 9
+        adjust_kwargs = dict(
+            top=0.94, bottom=0.05, left=0.03, right=0.97, hspace=0.02, wspace=0.02
+        )
+    else:
+        fig = plt.figure(figsize=(9, 5))
+        grid_lw = 0.5
+        coast_lw = 0.5
+        cax_width = "55%"
+        cax_height = "10%"
+        cax_borderpad = -9
+        cbar_label_size = 12
+        cbar_tick_size = None
+        title_size = None
+        adjust_kwargs = dict(
+            top=0.985, bottom=0.015, left=0.008, right=0.992, hspace=0.0, wspace=0.0
+        )
+
     gs = fig.add_gridspec(2, 3, width_ratios=[1, 1, 1], height_ratios=[0.35, 0.65])
     axes = []
     axes.append(
@@ -34,7 +64,7 @@ def plot_global(
         )
     )
     axes.append(plt.subplot(gs[1, :], projection=ccrs.Mollweide()))
-    # Iterate over axes
+
     for ax in axes:
         pc = ax.scatter(
             lon,
@@ -47,30 +77,35 @@ def plot_global(
             transform=ccrs.PlateCarree(),
         )
         ax.gridlines(
-            linewidth=0.5,
-            ylocs=np.linspace(-90, 90, num=7),  # parallels
+            linewidth=grid_lw,
+            ylocs=np.linspace(-90, 90, num=7),
             xlocs=np.linspace(-180, 180, num=13),
             color="grey",
             alpha=0.6,
             linestyle="-",
-        )  # meridians
-        ax.coastlines(linewidth=0.5)
-    # Add colorbar
-    # inset axes into global map and move upwards
-    cax = inset_axes(
-        axes[-1], width="55%", height="10%", loc="upper center", borderpad=-9
-    )
-    # use last artist for the colorbar
-    clb = plt.colorbar(pc, cax=cax, extend="both", orientation="horizontal")
-    clb.set_label("{}".format(cbar_label), fontsize=12)
+        )
+        ax.coastlines(linewidth=coast_lw)
 
-    # Title
-    plt.suptitle("{}".format(title))
-    # Adjust plot
-    plt.subplots_adjust(
-        top=0.985, bottom=0.015, left=0.008, right=0.992, hspace=0.0, wspace=0.0
+    cax = inset_axes(
+        axes[-1],
+        width=cax_width,
+        height=cax_height,
+        loc="upper center",
+        borderpad=cax_borderpad,
     )
+    clb = plt.colorbar(pc, cax=cax, extend="both", orientation="horizontal")
+    clb.set_label("{}".format(cbar_label), fontsize=cbar_label_size)
+    if cbar_tick_size is not None:
+        clb.ax.tick_params(labelsize=cbar_tick_size)
+
+    if title_size is None:
+        plt.suptitle("{}".format(title))
+    else:
+        plt.suptitle("{}".format(title), fontsize=title_size)
+
+    plt.subplots_adjust(**adjust_kwargs)
     return fig
+
 
 def plot_power_spectrum(m, N: int, radius: float = RADIUS_CORE):
     # SH power spectrum and Br on grid at CMB
