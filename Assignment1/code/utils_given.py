@@ -70,7 +70,7 @@ def plot_global(
     plt.subplots_adjust(
         top=0.985, bottom=0.015, left=0.008, right=0.992, hspace=0.0, wspace=0.0
     )
-    plt.show()
+    return fig
 
 def plot_power_spectrum(m, N: int, radius: float = RADIUS_CORE):
     # SH power spectrum and Br on grid at CMB
