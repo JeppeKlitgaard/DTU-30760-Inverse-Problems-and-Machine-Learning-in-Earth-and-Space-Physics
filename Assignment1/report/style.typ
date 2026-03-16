@@ -5,6 +5,7 @@
   show: codly-init.with()
   codly(languages: codly-languages)
 
+  set heading(numbering: "1.1")
   show <nonumber>: set heading(numbering: none)
   set math.equation(numbering: "(1)")
 
@@ -25,18 +26,6 @@
 
 
 
-#set heading(numbering: "1.1: ", supplement: "Part")
-#show heading: it => {
-  let supp = none
-  if it.level == 1 {
-    "Part " + counter(heading).display() + it.body
-  } else if it.level == 2 {
-    "Task " + counter(heading).display() + it.body
-  } else if it.level == 3 {
-    it.body
-  }
-
-}
 
 
 
