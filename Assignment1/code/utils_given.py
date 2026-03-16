@@ -33,9 +33,9 @@ def plot_global(
         cax_borderpad = -5
         cbar_label_size = 8
         cbar_tick_size = 7
-        title_size = 9
+        title_size = 11
         adjust_kwargs = dict(
-            top=0.94, bottom=0.05, left=0.03, right=0.97, hspace=0.02, wspace=0.02
+            top=0.90, bottom=0.05, left=0.03, right=0.97, hspace=0.02, wspace=0.02
         )
     else:
         fig = plt.figure(figsize=(9, 5))
