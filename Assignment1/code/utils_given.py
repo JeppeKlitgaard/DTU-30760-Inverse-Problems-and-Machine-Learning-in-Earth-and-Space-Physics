@@ -18,6 +18,7 @@ def plot_global(
     cmap=None,
     limit=None,
     half_page: bool = False,
+    ignore_cbar: bool = False,
 ):
     if limit is None:
         limit = np.max(np.abs(data))
@@ -86,17 +87,18 @@ def plot_global(
         )
         ax.coastlines(linewidth=coast_lw)
 
-    cax = inset_axes(
-        axes[-1],
-        width=cax_width,
-        height=cax_height,
-        loc="upper center",
-        borderpad=cax_borderpad,
-    )
-    clb = plt.colorbar(pc, cax=cax, extend="both", orientation="horizontal")
-    clb.set_label("{}".format(cbar_label), fontsize=cbar_label_size)
-    if cbar_tick_size is not None:
-        clb.ax.tick_params(labelsize=cbar_tick_size)
+    if not ignore_cbar:
+        cax = inset_axes(
+            axes[-1],
+            width=cax_width,
+            height=cax_height,
+            loc="upper center",
+            borderpad=cax_borderpad,
+        )
+        clb = plt.colorbar(pc, cax=cax, extend="both", orientation="horizontal")
+        clb.set_label("{}".format(cbar_label), fontsize=cbar_label_size)
+        if cbar_tick_size is not None:
+            clb.ax.tick_params(labelsize=cbar_tick_size)
 
     if title_size is None:
         plt.suptitle("{}".format(title))
