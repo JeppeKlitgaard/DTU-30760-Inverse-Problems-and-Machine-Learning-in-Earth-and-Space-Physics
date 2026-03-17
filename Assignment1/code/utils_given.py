@@ -113,12 +113,19 @@ def plot_power_spectrum(m, N: int, radius: float = RADIUS_CORE):
 
     # Plot Power spectrum (Unphysical divergence at high SH degree)
     n = np.arange(1, N + 1)
-    plt.figure(figsize=(9, 4))
+    plt.figure(figsize=(4, 2.5))
     plt.semilogy(n, ps)
-    plt.xlabel("degree n")
+    plt.xlabel("Degree, $n$")
     plt.ylabel(r"Power [nT$^2$]")
-    plt.title(r"Power spectra of estimated geomagnetic field at CMB $r={}$km".format(radius))
+    plt.title(r"Predicted Power Spectrum at CMB")
     nmax = np.max([len(n)])
-    plt.xticks(np.arange(1, nmax + 1))
+    plt.xticks(np.arange(2, nmax + 1, 2))
+    plt.grid(which="minor", axis="x", )
+    plt.tight_layout()
     plt.grid()
+
+    ax = plt.gca()
+#
     plt.show()
+
+    return plt.gcf()
