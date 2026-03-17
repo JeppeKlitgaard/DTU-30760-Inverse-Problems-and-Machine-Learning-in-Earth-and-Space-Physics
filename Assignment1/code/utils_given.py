@@ -112,20 +112,15 @@ def plot_power_spectrum(m, N: int, radius: float = RADIUS_CORE):
     ps = cp.model_utils.power_spectrum(m, radius=radius)
 
     # Plot Power spectrum (Unphysical divergence at high SH degree)
+    fig, ax = plt.subplots(figsize=(4, 2.5))
     n = np.arange(1, N + 1)
-    plt.figure(figsize=(4, 2.5))
-    plt.semilogy(n, ps)
-    plt.xlabel("Degree, $n$")
-    plt.ylabel(r"Power [nT$^2$]")
-    plt.title(r"Predicted Power Spectrum at CMB")
+    ax.semilogy(n, ps)
+    ax.set_xlabel("Degree, $n$")
+    ax.set_ylabel(r"Power [nT$^2$]")
+    ax.set_title(r"Predicted Power Spectrum at CMB")
     nmax = np.max([len(n)])
-    plt.xticks(np.arange(2, nmax + 1, 2))
-    plt.grid(which="minor", axis="x", )
-    plt.tight_layout()
-    plt.grid()
+    ax.set_xticks(np.arange(2, nmax + 1, 2))
+    ax.grid()
+    fig.tight_layout()
 
-    ax = plt.gca()
-#
-    plt.show()
-
-    return plt.gcf()
+    return fig
