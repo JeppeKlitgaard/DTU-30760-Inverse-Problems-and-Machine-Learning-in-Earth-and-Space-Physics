@@ -14,10 +14,10 @@
   set page(
     numbering: "1/1",
     margin: (
-      top: 1.5cm,
-      bottom: 1.5cm,
-      left: 1.5cm,
-      right: 2.5cm,
+      top: 2.0cm,
+      bottom: 2.0cm,
+      left: 2.0cm,
+      right: 3.0cm,
     )
   )
   doc
@@ -26,9 +26,9 @@
 #let frontpage-1(front-content: none, authors: (), date: auto) = {
   // Setup variables
   let font = "Liberation Sans"
-  let logo = image("assets/dtu_logo.pdf", width: 20mm)
+  let logo = image("assets/dtu_logo.svg", width: 20mm)
   
-  set page(margin: 20mm, numbering: none)
+  set page(margin: 30mm, numbering: none)
   pagebreak(weak: true)
 
   let affiliation = [
