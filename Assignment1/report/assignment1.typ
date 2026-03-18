@@ -474,8 +474,7 @@ If we disregard the analysis carried out in @sec:theory-math and attempt to cons
 Immediately, we note the rapid oscillations exhibited by the field towards the poles, which does not agree with our expectations. Further, the magnitude of the field oscillations is much larger than that found in the literature @ref:hammer, which prescribes an amplitude of approximately #qty("1", "mT"). This is a consequence of the aforementioned ill-posedness of the inverse problem. Further, inspection of the residuals $vv(ε) = vvh(d) - mm(G) vvh(m)$ as shown in @fig:residual-ls reveals that these are far from normally distributed and instead appear to follow a long-tailed distribution such as the Huber distribution, which has been fitted to the data alongside the Laplace distribution.
 
 It is for this reason that we have chosen the Huber weights given in @eq:huber-weights as the M-estimator for our IRLS algorithm, which has the effect of reducing the influence of observations further from the centre of the data distribution.
-  ])
-})
+])})
 #pagebreak(weak: true)
 == Non-Robust $L_2$-Regularised Solution
 We consider the specific case of a non-robust $L_2$-regularised solution, which by the treatment in @sec:theory-math and identifying
@@ -569,7 +568,7 @@ This value provides a reasonable balance between fitting the observations and su
   ],
   label: <fig:l2-solutions>,
 )
-To illustrate the effect of regularization, three representative solutions are considered: an under-regularized solution, the optimal solution, and an over-regularized solution, shown in @fig:l2-solutions. For small values of $alpha^2$, the regularization is too weak and the inversion fits the data too closely. This leads to overly oscillatory behavior and amplification of high-degree spherical harmonic components, producing unrealistic small-scale features in the CMB field. For large values of $alpha^2$, the regularization becomes too strong and suppresses regions with high spatial frequencies model parameters excessively, resulting in an overly smooth field. The optimal solution, as shown in @fig:l2-field-map,  lies between these two extremes and notably preserves the large reversed-flux region over the South Atlantic Ocean while reducing noise.
+To illustrate the effect of regularization, three representative solutions are considered: an under-regularized solution, the optimal solution, and an over-regularized solution, shown in @fig:l2-solutions. For small values of $alpha^2$, the regularization is too weak and the inversion fits the data too closely. This leads to overly oscillatory behavior and amplification of high-degree spherical harmonic components, producing unrealistic small-scale features in the CMB field. For large values of $alpha^2$, the regularization becomes too strong and suppresses regions with high spatial frequencies model parameters excessively, resulting in an overly smooth field. The optimal solution, as shown in @fig:l2-field-map, lies between these two extremes and notably preserves the large reversed-flux region over the South Atlantic Ocean while reducing noise.
 
 #pagebreak(weak: true)
 #meander.reflow({
@@ -586,9 +585,6 @@ Among the examined solutions, the case with $alpha_*^2 = 1.60 times 10^(-8)$ sho
 // As shown in @fig:l2-different-power-spectra, for smaller values of $alpha^2$, more power is retained at higher spherical-harmonic degrees, indicating that short-wavelength structure is less strongly damped. For larger values of $alpha^2$, the higher-degree part of the spectrum is generally suppressed, although the decay is not strictly monotonic. Overall, stronger regularization reduces the contribution from high-degree components and produces a smoother CMB field. Among the tested solutions, the case with $alpha_*^2 = 1.60 times 10^(-8)$ provides a good balance between retaining large-scale structure and suppressing high-degree fluctuations, as reflected by its intermediate decay behavior in the power spectrum.
 
 // The optimal CMB field obtained with $L_2$ regularization is shown in @fig:l2-field-map. The solution is dominated by broad spatial structures, with negative flux patches in the northern hemisphere and positive flux concentrated mainly in parts of the southern hemisphere and low-latitude regions. Compared with the under-regularized case, the map is substantially smoother and less oscillatory, while still retaining the main large-scale features of the field.
-
-//
-
 
 // I propose top paragraph over the lower one, I am not sure what you mean by large-scale signal?
 The residual distribution for the optimal $L_2$-regularized solution is shown in @fig:l2-residual. It is strongly peaked around zero and approximately symmetric, but is clearly not normally distributed. However, the residuals exhibit heavier tails than a Gaussian distribution and are more closely matched by a Laplace distribution. This suggests that the errors are not purely Gaussian and may include modelling errors, outliers, or unresolved physical processes. This behavior highlights a limitation of the non-robust $L_2$ formulation and motivates the use of robust $L_1$ regularization.
@@ -906,4 +902,7 @@ Having considered the influence of the unmodelled ionosphere and magnetosphere, 
 )
 
 == Implementation of Robust Iteratively Reweighted Least Squares Algorithm <app:irls>
-#raw(read("manual/irls.py"), block: true, lang: "python")
+#[
+  #set text(size: 9pt)
+  #raw(read("manual/irls.py"), block: true, lang: "python")
+]
