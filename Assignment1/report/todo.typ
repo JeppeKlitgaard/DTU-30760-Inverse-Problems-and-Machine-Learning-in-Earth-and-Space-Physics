@@ -1,25 +1,12 @@
 = TODO
 
 - ??: Abstract
-- JK: Style report
-  - Smaller caption text
-  - Smaller caption gap
-// - ??: Discussion on ill-posedness (Hadamard sense)
-//   - $1/r$ term
-// - JK: Merge math theory sections
-// - JK: Huber and MAD
 - ??: Some recap/discussion of the assumptions used and how reasonable they are
 - ML: Write-up L2, (i)
   - How alpha changes solution (maybe 3 side-by-side plots?)
-  - Power spectrum
-- JK: Write-up L1/Robust, (ii)
-  - Covariance/resolution
-- ML: (iv)
-- ML: Introduction of mission and experimental design
 - ??: Discussion around patch size related to discretisation
 - ??: Comment on inadequacy of provided L curve estimate
   - Mention that it is a heuristic anyway
-- JK: TODO elaborate a bit more on iterative algorithm
 
 = Questions for TA/Chris
 - We do not have access to a good estimate of the dispersion of the "untainted" Gaussian in this case, so presumably we need to iteratively find this using the residuals of the model?

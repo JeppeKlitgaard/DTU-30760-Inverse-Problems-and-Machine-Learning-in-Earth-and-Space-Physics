@@ -1,6 +1,8 @@
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.10": *
 
+#let primary-color = color.rgb(153, 0, 0)
+
 #let style(doc) = {
   show: codly-init.with()
   codly(languages: codly-languages)
@@ -18,16 +20,57 @@
       right: 2.5cm,
     )
   )
-
   doc
 }
 
+#let frontpage-1(front-content: none, authors: (), date: auto) = {
+  // Setup variables
+  let font = "Liberation Sans"
+  let logo = image("assets/dtu_logo.pdf", width: 20mm)
+  
+  set page(margin: 20mm, numbering: none)
+  pagebreak(weak: true)
+
+  let affiliation = [
+    #set text(font: font, size: 14pt)
+    #set par(spacing: 0.8em)
+    #set par(leading: 0.5em)
+    *DTU Space*
+
+    Department of Space Research\
+    and Space Technology
+  ]
+
+  [
+    #set align(center)
+    #logo
+    #v(6mm)
+    #affiliation
+
+    #v(15mm)
+    
+    #line(length:100%)
+    #title()
+    #line(length:100%)
+
+    #set text(size: 14pt)
+    #authors.intersperse(linebreak()).join()
 
 
+    #v(10mm)
+    #front-content
+    #v(1fr)
+    #{if date != auto {date} else {datetime.today()}}.display()
+  ]
+  pagebreak(weak: true)
+}
 
-
-
-
+#set page(paper: "a4")
+#set document(
+  title: "Dutten Report Demo",
+  author: ("Jeppe Klitgaard")
+)
+#frontpage-1()
 
 #set text(
   size: 11pt
