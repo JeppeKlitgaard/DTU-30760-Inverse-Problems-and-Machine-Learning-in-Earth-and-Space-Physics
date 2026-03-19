@@ -31,6 +31,8 @@ tqdm = ">=4.67.3,<5"
 ipykernel = "<7"
 numba = ">=0.64.0,<0.65"
 ipython = ">=9.11.0,<10"
+colorcet = ">=3.1.0,<4"
+cmcrameri = ">=1.9,<2"
 
 [pypi-dependencies]
 chaosmagpy = ">=0.13.1, <0.14"
