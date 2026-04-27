@@ -2,10 +2,13 @@
 __pycache__/
 *.py[cod]
 
-# pixi environments
+# Pixi environments
 .pixi/*
 !.pixi/config.toml
 
-# material
+# Material
 *.pdf
 *.zip
+
+# Other
+.joblib_cache/

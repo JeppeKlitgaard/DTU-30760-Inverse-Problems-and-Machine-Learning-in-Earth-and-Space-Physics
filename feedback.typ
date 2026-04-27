@@ -32,3 +32,19 @@ I really don't like the notation $G^(-α)$ which is very easy to interpret as a 
 = Lecture: L10 (ML intro)
 - I really like [Goodhart's law](https://en.wikipedia.org/wiki/Goodhart%27s_law) when thinking of train/test dataset splits.
   - I think it is mostly applied in social sciences and economics, but I think it is sufficiently profound that it could and should be mentioned in ML.
+
+= Assignment 2
+- Equation (1): $"exp"$ instead of $"Exp"$?
+- Very nit-picky: $"TWIP"$ instead of $T W I P$
+  - Kerning very bad otherwise, also upright indicates operator or single object.
+  - Arguably $"TWIP"(bold(underline(ϕ)))$
+- Mega nit-picky: $d x$ should be $dif x$ if differential, but here we have discretised integral so maybe $Δ x$ is the most appropriate notation?
+- More information about where experimental data comes from
+
+
+= Question Assignment 2
+- Does reconstruction look somewhat okay?
+- Is it okay to have nugget in the covariance model?
+- Is the TWIP number correct?
+  - Seems to be quite far off when only considering the water table?
+  - Have tested both SKFMM and FSM implementation

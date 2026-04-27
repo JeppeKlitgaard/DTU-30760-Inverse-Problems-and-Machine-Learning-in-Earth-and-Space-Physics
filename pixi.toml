@@ -2,7 +2,7 @@
 authors = ["Jeppe Klitgaard <hi@jeppe.science>"]
 channels = ["conda-forge"]
 name = "30760 Inverse Problems and Machine Learning in Earth and Space Physics"
-platforms = ["win-64"]
+platforms = ["win-64", "linux-64"]
 version = "0.1.0"
 
 [tasks]
@@ -26,14 +26,34 @@ bspline = ">=0.1.1,<0.2"
 pytorch = ">=2.10.0,<3"
 ipympl = ">=0.10.0,<0.11"
 ffmpeg = ">=8.0.1,<9"
-polars = ">=1.38.1,<2"
+polars = ">=1.39,<2"
 tqdm = ">=4.67.3,<5"
 ipykernel = "<7"
 numba = ">=0.64.0,<0.65"
 ipython = ">=9.11.0,<10"
 colorcet = ">=3.1.0,<4"
 cmcrameri = ">=1.9,<2"
+# scikit-sparse = ">=0.4.16,<0.5"  # Conda package not updated :(
 
 [pypi-dependencies]
 chaosmagpy = ">=0.13.1, <0.14"
 scikit-traveltime = ">=0.1.4, <0.2"
+scikit-sparse = ">=0.5.0, <0.6"
+
+[environments]
+default = { features = ["cpu"], solve-group = "default" }
+cuda = { features = ["cuda"], solve-group = "default" }
+
+### CPU
+[feature.cpu]
+platforms = ["linux-64", "win-64"]
+
+[feature.cpu.pypi-dependencies]
+nanopinv = { path = "../nanopinv", editable = true, extras = ["viz", "cpu"] }
+
+### CUDA
+[feature.cuda]
+platforms = ["linux-64"]
+
+[feature.cuda.pypi-dependencies]
+nanopinv = { path = "../nanopinv", editable = true, extras = ["viz", "cuda"] }
