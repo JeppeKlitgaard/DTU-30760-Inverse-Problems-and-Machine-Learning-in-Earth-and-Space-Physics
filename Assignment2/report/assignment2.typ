@@ -110,7 +110,10 @@ $ <eq:eikonal>
 
 The derivation due to Born and Wolf relies on the assumption that the characteristic length scale of the variations in the refractive index are much larger than the wavelengths of the electromagnetic waves. If we assume the data to be collected as part of the study described in @boise-gpr, we may obtain estimates of the wavelengths of the radar waves with which we can reason about the validity of the high-frequency assumption.
 
-The study cites an antenna frequency of $f = #qty("100", "MHz")$, with relative permittivities $ε/ε_0$ of $≈ {1, 4, 81} med ["F/m"]$ for air, soil, and water respectively.
+The study cites an antenna frequency of $f = #qty("100", "MHz")$, with relative permittivities $ε\/ε_0$ of $≈ {1, 4, 81} med ["F/m"]$ for air, soil, and water respectively. We may find the wavelengths associated with these parameters using the relation
+$
+  λ = v/f = c / (f sqrt(ε\/ε_0))
+$
 
 The frequencies used to obtain the data are not given, but typical GPR frequencies are in the range of #qty("10", "MHz") to #qty("2.6", "GHz") @wiki-gpr, which for the conservative assumption of a permittivity $ε=$
 
