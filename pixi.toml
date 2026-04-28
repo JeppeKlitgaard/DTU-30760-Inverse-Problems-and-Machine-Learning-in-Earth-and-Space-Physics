@@ -38,11 +38,11 @@ cmcrameri = ">=1.9,<2"
 [pypi-dependencies]
 chaosmagpy = ">=0.13.1, <0.14"
 scikit-traveltime = ">=0.1.4, <0.2"
-scikit-sparse = ">=0.5.0, <0.6"
+# scikit-sparse = ">=0.5.0, <0.6"
 
 [environments]
 default = { features = ["cpu"], solve-group = "default" }
-cuda = { features = ["cuda"], solve-group = "default" }
+cuda = { features = ["cuda"], solve-group = "cuda" }
 
 ### CPU
 [feature.cpu]
