@@ -224,19 +224,22 @@ $
 $ <eq:posterior>
 where $L(vv(m)) $ is the _likelihood probability density_ describing how likely the observed data $d$ is given the model parameters $vv(m)$.
 
-=== Probablistic Model
+=== Likelihood
 
-The Bayes-like formula in @eq:posterior may be re-expressed for the inverse problem at hand by identifying terms with those described in @sec:theory-physics:
+If we assume the data to be independently and normally distributed and additionally assume the same of the errors introduced by the forward model, both $ρ_d (vv(d))$ and $θ(vv(d)|vv(m))$ can be expressed as independent normal distributions:
 $
-  σ_v (vv(v)) = L(vv(v)) ρ_v (vv(v))
+  ρ_d (vv(d)) &= cal(N)(vv(d)|vv(μ)_d, Σ_d)\
+  θ(vv(d)|vv(m)) &= cal(N)(vv(d)|g(vv(m)), Σ_e)\
 $
+which convolve to give the likelihood as another normal distribution:
 $
-  L(vv(v)) = ∫_cal(D) (ρ_d (vv(d)) θ(vv(d)|vv(v)))/(μ_d (vv(d))) dif vv(d)
+  L(vv(m)) ∝ cal(N)(g(vv(m))|vv(μ)_d, Σ_d + Σ_e).
 $
 
-TODO THIS SUCKS
-TODO: Map symbols onto physics symbols
-
+We further assume the errors of the forward model to be negligible compared to the variance of the data distribution, which is known a priori to be #qty("4", "ns"). That is, given $Σ_e ≪ Σ_d$, the likelihood can be approximated as
+$
+  L(vv(m)) ∝ cal(N)(g(vv(m))|vv(μ)_d, Σ_d).
+$ <eq:likelihood>
 
 == Prior Information and 2-Point Statistics <sec:theory-prior>
 
@@ -261,7 +264,7 @@ $
 $
 where notably $γ(h)$ here represents an analytical, exact semi-variogram.
 
-=== Obtaining a prior distribution
+=== Obtaining a prior distribution <sec:prior-dist>
 
 In order to obtain a covariance function that suitably captures the spatial correlations in the prior samples, we may perform a fit of candidate correlation functions $C(h; θ)$ in which their hyperparameters $θ$ are determined by minimising the mean squared error between the empirical semi-variogram and the analytical semi-variogram implied by the covariance function:
 $
@@ -312,37 +315,21 @@ $
 which gives $λ_"soil" = #qty("1.5", "m")$ and $λ_"water" = #qty("0.3", "m")$. These effectively set a lower bound on the size of the features that can be resolved using the acquired data.
 This is a useful metric to keep in mind, as it also provides a useful scale of discretisation for the model space. In particular, no additional resolution can be obtained by further refining the model discretisation beyond this limit without also increasing the frequency of the radar waves or resorting to a more complex physical model that relaxes the high-frequency assumption. As such, the previously proposed discretisation of $Δ x = Δ y = #qty("0.25", "m")$ may already be below the limit of resolution set by the GPR frequency and the properties of the medium.
 
-
-
-=== Porosity and Total Water in Place <sec:physics-porosity>
-
-In order to obtain estimates of the Total Water In Place (TWIP) over a region of interest, we first relate the phase velocity of the radar waves to the porosity of the medium, $Φ$, through the following empirical relation:
-$
-  Φ = exp(-41.7 v + 2.03).
-$
-
-The origin of the relation is unknown to the author and as such is simply assumed sufficiently accurate for the purposes of this report.
-
-The TWIP may be obtained by integrating the porosity over the area of interest:
-$
-  TWIP
-  &= ∫ Φ(vv(r)) dif vv(r)\
-  &= ∑_(i=1)^(N_x) ∑_(j=1)^(N_y) Φ_(i j) Δ x Δ y\
-$
-where $N_x, N_y$ refer to the number of discretisation points in the $x$ and $y$ directions respectively, and $Δ x, Δ y$ are the corresponding grid spacings.
-
-For the purposes of this report, we define the forward model to be only the solution to the eikonal equation and thus relegate the porosity and TWIP calculations to the post-inversion analysis of the obtained model.
-
-== Numerical Solution of the Forward Problem <sec:theory-eikonal-solution>
+=== Numerical Solution of the Forward Problem <sec:theory-eikonal-solution>
 In order to compute the forward projection of a given model, here understood to be a discretised spatial distribution of phase velocities, we must solve @eq:eikonal-travel-time, and ideally do so as efficiently as possible.
 
 A popular choice of algorithm dedicated to solving the family of equations to which the eikonal equation belongs is the Fast Marching Method (FMM) due to Sethian @bib:fmm, which are implemented as first and second order methods in @bib:skfmm.
 The finer details of the FFM algorithm is beyond the scope of this report, but a notable consequence of the formulation of the algorithm is that it is not amenable to parallelisation. While multiple source-receiver pairs may be computed in parallel using CPU cores, the method is not able utilise modern, massively-parallel hardware such as GPUs efficiently.
 
-For this reason, the alternative Fast Sweeping Method (FSM) due to Zhao @bib:fsm-zhao @bib:fsm-zhao-parallel is considered a superior choice for solving the eikonal equation on GPUs, as it more naturally lends itself to parallelisation. In particular, have used the paper @bib:fsm-2nd-order as a reference for the implementation of both first and second order parallel FSM algorithms, which are now available as part of the `nanopinv` library developed concurrently with the writing of this report.
+For this reason, the alternative Fast Sweeping Method (FSM) due to Zhao @bib:fsm-zhao @bib:fsm-zhao-parallel is considered a superior choice for solving the eikonal equation on GPUs, as it more naturally lends itself to parallelisation. Taking the paper @bib:fsm-2nd-order as a reference, `nanopinv` implements both a first and second order version of the parallel FSM algorithms suitable for use with CPU or GPU hardware.
 
 Common to all the implementations is that they produce an approximation of the travel time $T$ from a source $vv(r)_s$ to all other points in the model space when given a propagation velocity field $v(vv(r))$.
-The estimated travel time to the receivers, $vv(r)_r$, may then be obtained by interpolation.
+The estimated travel time to the receivers, $vv(r)_r$, may then be obtained by interpolation. @fig:forward-model-prior-samples shows the forward projections obtained by the 2nd order FSM solver for three samples drawn from the prior distribution obtained in @sec:prior-dist.
+
+#figure(
+  image("export/forward_model_prior_samples.png"),
+  caption: "Comparison of the travel time fields obtained by the first and second order FSM implementations for a given velocity field."
+) <fig:forward-model-prior-samples>
 
 ==
 
@@ -350,7 +337,7 @@ The estimated travel time to the receivers, $vv(r)_r$, may then be obtained by i
 
 In order to sample the posterior, $σ_m (vv(m))$, we turn to the theory of Markov Chains and Monte Carlo sampling, in which a chain of samples is generated by a Markov process — that is, a process in which the next state depends only on the current state.
 
-While many algorithms for simulating such processes exist, we will focus on the _Extended Metropolis algorithm_ due to Mosegaard and Tarantola @bib:extended-metropolis whose transition algorithm is described in @alg:extended-metropolis. In order to efficiently sample the prior model distribution even for large model spaces, we leverage the Preconditioned Crank-Nicolson proposal algorithm given in @alg:preconditioned-crank-nicolson.
+While many algorithms for simulating such processes exist, we will focus on the _Extended Metropolis algorithm_ due to Mosegaard and Tarantola @bib:extended-metropolis whose transition procedure is described in @alg:extended-metropolis. In order to efficiently sample the prior model distribution even for large model spaces, we leverage the Preconditioned Crank-Nicolson proposal algorithm given in @alg:preconditioned-crank-nicolson.
 
 It should be noted that implementations of @alg:extended-metropolis typically work with the log-transformed likelihood and ensure the forward model and likelihood are only evaluated once per model by to improve performance.
 
@@ -460,7 +447,14 @@ It should be noted that implementations of @alg:extended-metropolis typically wo
 
 === Sampling the Posterior
 
-By using these algorithms with sufficient care, we will be able to sample from the posterior distribution of the model parameters, $σ_m (vv(m))$.
+By using these algorithms with sufficient care, we will be able to sample from the posterior distribution of the model parameters, $σ_m (vv(m))$. Firstly, the choice of the step size, $δ$, will have significant influence on the efficiency with which we can sample. By inspecting the proposal algorithm in @alg:preconditioned-crank-nicolson, it is clear that a larger step size will retain less of the current model and instead be more heavily influenced by the sample drawn from the prior distribution. As such, a larger step size will more aggressively explore the model space. This is of course desirable, but comes at the cost of a lower acceptance rate as many of the proposed models will inevitably lie in regions of low likelihood inside the model space. Conversely, if the chosen step size is too small, the acceptance rate will be high, but the chain will be slow to explore the model space and will be more likely to get stuck in local valleys within the modal space, thus failing to accurately sample the posterior. The literature generally favours a step size corresponding to an acceptance rate of approximately $25%$.
+
+The second important hyperparameter is the inverse temperature, $β ∈ (0, 1]$, which directly affects the acceptance probability of the proposed models. As $β$ goes towards zero, the acceptance probability approaches unity, and as such the inverse temperature may be understood to effectively flatten the likelihood landscape thus making it easier to traverse. This comes with the unfortunate consequence that samples drawn during simulations away from unit inverse temperature are not distributed according to the true posterior distrubution. As such, we concern ourselves only with _cold sampling_ at $β=1$ for now.
+
+=== Step size tuning
+
+
+
 
 
 
@@ -473,6 +467,27 @@ The introduction of the inverse temperature, $β$, in @alg:extended-metropolis i
 
 === Hyperparameter Tuning
 
+
+
+
+=== Porosity and Total Water in Place <sec:physics-porosity>
+
+In order to obtain estimates of the Total Water In Place (TWIP) over a region of interest, we first relate the phase velocity of the radar waves to the porosity of the medium, $Φ$, through the following empirical relation:
+$
+  Φ = exp(-41.7 v + 2.03).
+$
+
+The origin of the relation is unknown to the author and as such is simply assumed sufficiently accurate for the purposes of this report.
+
+The TWIP may be obtained by integrating the porosity over the area of interest:
+$
+  TWIP
+  &= ∫ Φ(vv(r)) dif vv(r)\
+  &= ∑_(i=1)^(N_x) ∑_(j=1)^(N_y) Φ_(i j) Δ x Δ y\
+$
+where $N_x, N_y$ refer to the number of discretisation points in the $x$ and $y$ directions respectively, and $Δ x, Δ y$ are the corresponding grid spacings.
+
+For the purposes of this report, we define the forward model to be only the solution to the eikonal equation and thus relegate the porosity and TWIP calculations to the post-inversion analysis of the obtained model.
 
 = Conclusion <sec:conclusion>
 We have employed an Iteratively Reweighted Least Squares (IRLS) algorithm with robust reweighting and Ekblom relaxation of the $L_1$-norm to solve the regularised inverse problem of obtaining the Gauss coefficients of the radial magnetic field expansion in a truncated spherical harmonics basis of degree $N=20$. The forward model relies on the assumption of interior sources, and the regularisation is applied to the projection of the model onto the Core-Mantle Boundary (CMB). This model was constructed using data gathered by the ESA Swarm mission in addition to a similar model using $L_2$-regularisation without data reweighting.
