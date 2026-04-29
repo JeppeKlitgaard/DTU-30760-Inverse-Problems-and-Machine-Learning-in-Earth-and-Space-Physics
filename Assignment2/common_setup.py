@@ -411,14 +411,6 @@ for model_name, model in models.items():
 
 fits = sorted(fits, key=lambda x: x["r2"], reverse=True)
 
-# Plot estimated variogram and covariance model fits
-fig, (ax_all, ax_select) = plt.subplots(
-    1, 2, figsize=(WIDTH_IN_NORMAL, 3.0), sharey=True, sharex=True
-)
-fig.subplots_adjust(wspace=0.05)
-
-ax_all.scatter(bin_centers_est, gamma_est, color="k", label="Empirical")
-
 # x_max = np.max(bin_centers_est)
 x_max = 10.0
 colors = cmc.batlowKS
@@ -428,49 +420,13 @@ for i, fit in enumerate(fits):
     fit["i"] = i
     fit["style"] = style
     fit["color"] = colors(i + 3)
-    fit["fit_model"].plot(
-        x_max=x_max,
-        ax=ax_all,
-        label=f"{fit['model_name']}:  {fit['r2']:.5f}",
-        color=fit["color"],
-        linestyle=style,
-    )
-
 
 # Select model plot
 select_fit = next(fit for fit in fits if fit["model_name"] == "Spherical")
-select_fit["fit_model"].plot(
-    x_max=x_max,
-    ax=ax_select,
-    label=f"{select_fit['model_name']}:  {select_fit['r2']:.5f}",
-    color=select_fit["color"],
-    lw=1.5,
-)
-ax_select.scatter(bin_centers_est, gamma_est, color="k")
-
-
-handles, labels = ax_all.get_legend_handles_labels()
-ax_select.legend(handles, labels, loc="upper left", bbox_to_anchor=(1, 1))
-ax_all.legend().remove()
-
-ax_all.set_xlabel("Distance, $h$ [m]")
-ax_select.set_xlabel("Distance, $h$ [m]")
-ax_all.set_ylabel("Semivariance, $γ(h)$ [ns$^2$]")
-
-fig.suptitle("Empirical variogram of prior samples and fitted models", y=0.95)
-ax_all.set_title("All fitted models")
-ax_select.set_title(f"{select_fit['model_name']} model")
-
-ax_all.set_ylim(0.0, ax_all.get_ylim()[1])
-ax_select.set_ylim(0.0, ax_select.get_ylim()[1])
-
-fig.tight_layout()
-fig.savefig(EXPORT_DIR / "empirical_variogram_fits.png", **EXPORT_KWARGS)
 
 
 # %%
 covariance_model = select_fit["fit_model"]
-covariance_model
 
 # %% [markdown]
 # ## Covariance Matrix
@@ -499,25 +455,6 @@ cov_field = cov_matrix[center_idx, :].reshape(Nx, Ny)
 
 # Physical extent for the plot axes
 extent = [model_grid_x[0], model_grid_x[-1], model_grid_y[0], model_grid_y[-1]]
-
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-# 3. Transpose (.T) and set origin='lower' to match Cartesian x-y plotting
-im0 = axes[0].imshow(dist_field.T, origin="lower", extent=extent, aspect="auto")
-axes[0].set_title("Distance from Center Point")
-axes[0].set_xlabel("x [m]")
-axes[0].set_ylabel("y [m]")
-fig.colorbar(im0, ax=axes[0], label="Distance [m]")
-
-im1 = axes[1].imshow(cov_field.T, origin="lower", extent=extent, aspect="auto")
-axes[1].set_title("Covariance with Center Point")
-axes[1].set_xlabel("x [m]")
-axes[1].set_ylabel("y [m]")
-fig.colorbar(im1, ax=axes[1], label="Covariance")
-
-plt.tight_layout()
-plt.show()
-
 
 # %% [markdown]
 # ## Prior Distribution
