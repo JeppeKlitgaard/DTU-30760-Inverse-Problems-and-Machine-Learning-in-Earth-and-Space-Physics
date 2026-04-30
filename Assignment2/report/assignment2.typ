@@ -59,7 +59,7 @@
   #set text(size: 12pt)
   = Abstract
 
-  The existence of the South Atlantic Anomaly (SAA) in the geomagnetic field remains a topic of debate within the literature. We present reconstructions of the radial geomagnetic field at the Core-Mantle Boundary (CMB) which to high certainty support findings of a region of reversed flux. The employed model solves the inverse problem of determining the Gauss coefficients of a spherical harmonic expansion using data from ESA's Swarm mission. Two inversions are carried out: one with unweighted data and a penalty on the forward projection onto the CMB in the $L_2$-norm, and the other with robustly reweighted data employing the $L_1$-norm instead. The latter model is determined using the Iteratively Reweighted Least Squares algorithm with Huber weights and a perturbed $L_p$-norm. Both of the produced models reveal flux reversal beneath the South Atlantic Ocean. Subsequent analysis of the prediction errors and the spatial resolution of the model leads to the conclusion that the null-hypothesis of purely dipolar geomagnetism must be rejected.
+TODO
 ]
 
 #frontpage-1(front-content: abstract, authors: authors, date: datetime(year: 2026, month: 3, day: 19))
@@ -102,13 +102,13 @@ The generated code output has in all instances been checked and often revised by
 
 = Introduction <sec:intro>
 
-This report seeks to demonstrate the use of probabilistic inversion techniques to solve the non-linear inverse problem of Ground Penetrating Radar (GPR) Tomography in which the spatial distribution of the electromagnetic phase velocities through the subsurface are reconstructed from observed travel times of radar waves between sources and receivers located in two nearby boreholes.
+This report seeks to demonstrate the use of probabilistic inversion techniques to solve the non-linear inverse problem of Ground Penetrating Radar (GPR) Tomography in which the spatial distribution of phase velocities through the subsurface are reconstructed from observed travel times of radar waves between sources and receivers located in two nearby boreholes.
 
 In order to produce the results presented in this report, we have developed a performant Python library, `nanopinv`, which is able to achieve accurate reconstructions of the modelled field by sampling the posterior distribution of the modelled field using Markov Chain Monte Carlo (MCMC) methods. The library is implemented in JAX @bib:jax and can efficiently leverage multiple CPU cores or GPU hardware.
 
-The performance of the library is further enhanced by implementations of the Fast Sweeping Method (FSM) @bib:fsm-zhao for solving the eikonal equation and enables to user to rapidly obtain independent samples by leveraging the Parallel Tempering method.
+The performance of the library is further enhanced by implementations of the Fast Sweeping Method (FSM) @bib:fsm-zhao for solving the eikonal equation and enables users to rapidly obtain independent samples by leveraging the Parallel Tempering method.
 
-The structure of the report deviates from the typical layout of an experimental report and instead interleaves theory and results. This choice is made in the interest of sparing the reader the rather hefty theory section featured in the first draft of the report. Further, the exploratory and interdisciplinary nature of the project incentivises a less rigid structure in which theory and design choices are introduced as they become relevant to the discussion of the results. Alternatively, the reader may simply regard @sec:theory as a lengthy theory section with accompanying examples, which is followed by more focused results and discussions sections in @sec:results and @sec:discussion respectively.
+The structure of the report deviates from the typical layout of an experimental report and instead interleaves theory and results. This choice is made in the interest of sparing the reader from the rather hefty theory section featured in the first draft of the report. Further, the exploratory and interdisciplinary nature of the project incentivises a less rigid structure in which theory and design choices are introduced as they become relevant to the discussion of the results. Alternatively, the reader may simply regard @sec:theory as a lengthy theory section with accompanying examples, which is followed by more focused results and discussions sections in @sec:results and @sec:discussion respectively.
 
 = Data and Experimental Design <sec:experiment-data>
 #let fig-data-rays = [
@@ -137,9 +137,9 @@ The structure of the report deviates from the typical layout of an experimental 
 
 The dataset used in this report consists of $N_d = 758$ travel time measurements taken using pairs of $N_"source" = 52$ source locations and $N_"receiver" = 235$ receiver locations in two boreholes at the Boise Hydrogeophysical Research Site (BHRS) near Boise, Idaho in the United States. The boreholes are separated by approximately 10 metres and measurements are obtained for elevations in the range $y∈[#qty("831.51", "m"), #qty("846.79", "m")]$ as shown on @fig:data-rays.
 
-During the experiment, measurements were obtained are using the technique of Cross Hole Ground Penetrating Radar (GPR), in which the delays in the observed travel times of electromagnetic radar waves emitted by the source and received by its corresponding network of receivers were recorded for each source-receiver pair.
+During the experiment measurements were obtained using the technique of Cross Hole Ground Penetrating Radar (GPR), where the delays in the observed travel times of radar waves emitted by the source and received by its corresponding network of receivers were recorded for each source-receiver pair.
 
-Additionally, we are given 3 samples of subsurface velocity fields shown in @fig:empirical-prior, which server as a source of prior information about the spatial distribution of velocities that we may expect to find using the dataset. Lastly, we are informed that the water table at the site is known to be located at an elevation of $y_* = #qty("844", "m")$.
+Additionally, we are given 3 samples of subsurface velocity fields shown in @fig:empirical-prior, which serve as a source of prior information about the spatial distribution of velocities. Lastly, we are informed that the water table at the site is known to be located at an elevation of $y_* = #qty("844", "m")$.
 ])})
 
 #figure(
@@ -148,24 +148,18 @@ Additionally, we are given 3 samples of subsurface velocity fields shown in @fig
 ) <fig:empirical-prior>
 
 
-
 = Theory and Exploration <sec:theory>
-In order to arrive at a suitable model and framework for obtaining it, we will first lay out a brief summary of the relevant theory from the fields of physics and probabilistic inversion.
-
-
-
-TODO Much more introduction
-
+In order to arrive at a suitable theoretical framing for the treatment of the inverse problem in question, we introduce the relevant concepts as the data is explored while validating and motivating the theory through presentation and brief discussion of intermediate results.
 
 == Probabilistic Inversion <sec:theory-probinv>
-In order to solve the inverse problem of estimating the velocity distribution from the observed travel times, we reach for the framework of _probabilistic inversion_, in which we adopt the notation due to Tarantola @bib:tarantola2005. This choice of framework is convenient for travel-time tomography problems as it handles non-linearities in the forward model naturally, while also offering a principled way to incorporate prior information and uncertainty quantification into the inversion.
+We start by introducing the larger structures within the framework of _probabilistic inversion_, to which end we adopt the notation due to Tarantola @bib:tarantola2005. This choice of framework is convenient for travel-time tomography problems as it handles non-linearities in the forward model naturally, while also offering a principled way to incorporate prior information and uncertainty quantification into the inversion.
 
 We may tersely summarise the framework as presented in @ref:course_book[4.2] by letting $ρ_m (vv(m)) : cal(M) → ℝ$ and $ρ_d (vv(d)) : cal(D) → ℝ$ denote the _prior model probability distribution_ and _prior data probability distribution_ respectively, with their arguments denoting the model parameters and data. For the problem covered by this report, the model space is 2-dimensional, $cal(M) = ℝ^(N_x × N_y)$, while the data space is 1-dimensional, $cal(D) = ℝ^(N_d)$. By assuming the data to be independent of the model parameters, we construct a joint prior distribution:
 $
   ρ(vv(d), vv(m)) = ρ_d (vv(d)) ρ_m (vv(m)).
 $ <eq:joint-prior>
 
-The forward model is then introduced through $vv(d) = g(vv(m)) + vv(e)$ where the error $vv(e)$ captures any numerical errors in the computation of the forward model $g(vv(m))$. Additionally, any potential stochasticity in the forward model and systematic biases such as those introduced by the simplifying assumptions made in the physical model as discussed in @sec:theory-physics enter through this error term. We may capture these effects by another joint probability distribution, $θ(vv(d), vv(m))$ that links the model and data spaces through the forward model.
+The forward model is then introduced through $vv(d) = g(vv(m)) + vv(e)$ where the error $vv(e)$ captures any numerical errors in the computation of the forward model $g(vv(m))$. Additionally, any potential stochasticity in the forward model and systematic biases such as those introduced by the simplifying assumptions made in the physical model as discussed in @sec:theory-physics enter through this error term. We may capture these effects by another joint probability distribution, $θ(vv(d), vv(m))$, that links the model and data spaces through the forward model.
 
 We introduce the notion of _homogenous probability density functions_, $μ(⋅)$, which have probability densities proportionate to the volume element of the space on which they are defined. As such, they may be used to ensure correct normalization of probability distributions under coordinate transformations and notably do not carry any information on their own.
 
@@ -175,13 +169,13 @@ $
   &= θ(vv(d)|vv(m)) θ(vv(m))\
   &= θ(vv(d)|vv(m)) μ_m (vv(m))\
 $ <eq:linking-distribution>
-where $θ(vv(m))$ is identified with $μ_m (vv(m))$ on the grounds that neither carry any information about the model parameters. This can be understood as $θ(vv(d), vv(m))$ not describing the model parameters themselves, only how the data is linked to them.
+where $θ(vv(m))$ is identified with $μ_m (vv(m))$ on the grounds that neither carry any information about the model parameters. This can be understood as $θ(vv(d), vv(m))$ not describing the model parameters themselves, only how the data $vv(d)$ is linked to them.
 
 As shown in @bib:tarantola2005[Eq. 1.83], these distributions may be combined to obtain the _joint posterior model distribution_:
 $
   σ(vv(m), vv(d)) = k (ρ(vv(m), vv(d)) θ(vv(d), vv(m)))/(μ(vv(m), vv(d))),
 $
-where $k$ is a normalisation constant and $μ(vv(m), vv(d))$ is the _joint homogenous probability density function_. This further simplies to the _posterior model distribution_ under the following assumptions
+where $k$ is a normalisation constant and $μ(vv(m), vv(d))$ is the _joint homogenous probability density function_. This further simplies to the _posterior model distribution_ under the following treatment
 $
   σ_m (vv(m))
   &= k ∫_cal(D) (ρ(vv(m), vv(d)) θ(vv(d), vv(m)))/(μ(vv(m), vv(d))) dif vv(d)
@@ -199,9 +193,9 @@ $
   &= k L(vv(m)) ρ_m (vv(m))
   &wider L(vv(m)) ≔ ∫_cal(D) (ρ_d (vv(d)) θ(vv(d)|vv(m)))/(μ_d (vv(d))) dif vv(d)
 $ <eq:posterior>
-where $L(vv(m)) $ is the _likelihood probability density_ describing how likely the observed data $d$ is given the model parameters $vv(m)$.
+where $L(vv(m)) $ is the _likelihood probability density_ describing how likely the observed data $vv(d)$ is given the model parameters $vv(m)$.
 
-=== Likelihood
+=== Likelihood <sec:likelihood>
 
 If we assume the data to be independently and normally distributed and additionally assume the same of the errors introduced by the forward model, both $ρ_d (vv(d))$ and $θ(vv(d)|vv(m))$ can be expressed as independent normal distributions:
 $
@@ -233,7 +227,7 @@ In order to assess the suitability of a covariance function for a given set of s
 $
   hat(γ)(h_k ± Δ h) = 1/(2 N_k) ∑_((i, j) ∈ S_k) (vv(v)_i - vv(v)_j)^2
 $
-where $h_k$ is the bin centre, $S_k = {(i, j) : h_k - Δ h < norm(vv(v)_i - vv(v)_j) < h_k + Δ h}$ is the set of point pairs in the bin and $N_k$ is the number of elements in $S_k$. The empirical semi-variogram can then be obtained by computing $hat(γ)(h_k ± Δ h)$ for each bin and averaging across the samples.
+where $h_k$ is the bin centre, $S_k = {(i, j) : h_k - Δ h < norm(vv(v)_i - vv(v)_j) < h_k + Δ h}$ is the set of indices over the point pairs in the bin and $N_k$ is the number of elements in $S_k$. The empirical semi-variogram can then be obtained by computing $hat(γ)(h_k ± Δ h)$ for each bin and averaging across the samples.
 
 Such a semi-variogram is related to the covariance function by
 $
@@ -243,12 +237,12 @@ where notably $γ(h)$ here represents an analytical, exact semi-variogram.
 
 === Obtaining a prior distribution <sec:prior-dist>
 
-In order to obtain a covariance function that suitably captures the spatial correlations in the prior samples, we may perform a fit of candidate correlation functions $C(h; θ)$ in which their hyperparameters $θ$ are determined by minimising the mean squared error between the empirical semi-variogram and the analytical semi-variogram implied by the covariance function:
+In order to obtain a covariance function that suitably captures the spatial correlations in the prior samples, we may perform a fit of candidate covariance functions $C(h; θ)$ in which their hyperparameters $θ$ are determined by minimising the mean squared error between the empirical semi-variogram and the analytical semi-variogram implied by the covariance function:
 $
   θ^* = arg min_θ norm(hat(γ)(h) - 1/2(σ^2 - C(h; θ)))_2^2
 $
 
-By first computing the empirical semi-variogram of the prior samples from @fig:empirical-prior and subsequently fitting a variety of candidate covariance functions to it, we are able to pick a suitable covarinace function. The empirical semi-variogram is estimated using `gstools` @bib:gstools, which is also used to perform the fitting. Notably, the global tolerance parameter of the underlying fitting routine is decreased to $10^(-14)$ as the fits were otherwise observed to be poor.
+By first computing the empirical semi-variogram of the prior samples from @fig:empirical-prior and subsequently fitting a variety of candidate covariance functions to it, we are able to pick a suitable function. The empirical semi-variogram is estimated using `gstools` @bib:gstools, which is also used to perform the fitting. Notably, the global tolerance parameter of the underlying fitting routine is decreased to $10^(-14)$ as the fits were otherwise observed to be poor.
 
 #figure(
   image("export/empirical_variogram_fits.png"),
@@ -259,9 +253,9 @@ While the circular covariance function slightly outperforms the spherical covari
 
 In order to obtain a prior distribution using two-point statistics, we also need to obtain an estimate of the mean of the distribution. As we have already assumed isotropy, we let the mean be constant across the field and estimate it by averaging across the prior samples to obtain $μ = num("0.0849")$.
 
-With estimates of both the mean and covariance function, we are able to construct a Gaussian prior distribution over the model space. In practice, this involves constructing the full covariance matrix, which for a model discretisation of $Δ x = Δ y = qty("0.25", "m")$ gives a model grid of $N_x = 41, N_y=63$ and covariance of size $2583×2583$. The efficiency of the prior sampling in `nanopinv` is enhanced by performing a Cholesky decomposition of the covariance matrix to obtain the lower triangular matrix $mm(L)$ during initialisation. Samples are then produced by sampling a standard normal distribution $z∼cal(N)(0, 1)$ and applying the affine transformation $x = μ + L z$.
+With estimates of both the mean and the covariance function, we are able to construct a Gaussian prior distribution over the model space. In practice, this involves constructing the full covariance matrix, which for a model discretisation of $Δ x = Δ y = qty("0.25", "m")$ gives a model grid of size $N_x = 41, N_y=63$ and covariance of size $2583×2583$. The efficiency of the prior sampling in `nanopinv` is enhanced by performing a Cholesky decomposition of the covariance matrix to obtain the lower triangular matrix $mm(L)$ during initialisation. Samples are then produced by sampling a standard normal distribution $z∼cal(N)(0, 1)$ and applying the affine transformation $x = μ + L z$.
 
-To gauge whether the obtained prior distribution is a plausibly represents the prior samples, we draw 3 samples from the distribution and compare them to the original samples in @fig:empirical-vs-estimated-prior-samples. The drawn samples appear to be similar in the characteristic length scale and magnitude of the variations, though notably does not reproduce the small-scale, directional patterns that appear to be present in the original samples. These violate the assumption of isotropy and may further be speculated to be systematic errors from the experiment.
+To gauge whether the obtained prior distribution is a plausible representation of the prior samples, we draw 3 samples from the distribution and compare them to the original samples in @fig:empirical-vs-estimated-prior-samples. The drawn samples appear to be similar in the characteristic length scale and magnitude of the variations, though notably does not reproduce the small-scale, directional patterns that appear to be present in the original samples. These violate the assumption of isotropy and may further be speculated to be systematic errors from the experiment.
 
 #figure(
   image("export/empirical_vs_estimated_prior_samples.png"),
@@ -273,7 +267,7 @@ To gauge whether the obtained prior distribution is a plausibly represents the p
 Having produced a prior distribution over the model space, we turn to the physics involved in the ground penetrating radar experiment in order to obtain a suitable forward model, $g : cal(M) -> cal(D)$, that maps the model parameters to the space of observations.
 
 === Eikonal Equation and Wave Travel Time <sec:physics-eikonal>
-In order to relate the observed travel times to the spatial distribution of the phase velocity, we refer to @born-optics[3.1.1] in which the _eikonal equation_, @eq:eikonal, is derived from Maxwell's equations under a number of relevant assumptions.
+In order to relate the observed travel times to the spatial distribution of the phase velocity, we refer to @born-optics[3.1.1] in which the _eikonal equation_, @eq:eikonal, is derived from Maxwell's equations under a number of assumptions.
 $
   norm(∇ S(vv(r)))_2^2 = n^2 (vv(r))
 $ <eq:eikonal>
@@ -290,12 +284,12 @@ $
   λ = v/f = c_0 / (f sqrt(ε\/ε_0)),
 $
 which gives $λ_"soil" = #qty("1.5", "m")$ and $λ_"water" = #qty("0.3", "m")$. These effectively set a lower bound on the size of the features that can be resolved using the acquired data.
-This is a useful metric to keep in mind, as it also provides a useful scale of discretisation for the model space. In particular, no additional resolution can be obtained by further refining the model discretisation beyond this limit without also increasing the frequency of the radar waves or resorting to a more complex physical model that relaxes the high-frequency assumption. As such, the previously proposed discretisation of $Δ x = Δ y = #qty("0.25", "m")$ may already be below the limit of resolution set by the GPR frequency and the properties of the medium.
+This is an valuable metric to keep in mind, as it also provides a useful scale of discretisation for the model space. In particular, no additional resolution can be obtained by further refining the model discretisation beyond this limit without also increasing the frequency of the radar waves or resorting to a more complex physical model that relaxes the high-frequency assumption. As such, the previously proposed discretisation of $Δ x = Δ y = #qty("0.25", "m")$ may already be below the limit of resolution set by the GPR frequency and the properties of the medium.
 
 === Numerical Solution of the Forward Problem <sec:theory-eikonal-solution>
 In order to compute the forward projection of a given model, here understood to be a discretised spatial distribution of phase velocities, we must solve @eq:eikonal-travel-time, and ideally do so as efficiently as possible.
 
-A popular choice of algorithm dedicated to solving the family of equations to which the eikonal equation belongs is the Fast Marching Method (FMM) due to Sethian @bib:fmm, which are implemented as first and second order methods in @bib:skfmm.
+A popular choice of algorithm dedicated to solving the family of equations to which the eikonal equation belongs is the Fast Marching Method (FMM) due to Sethian @bib:fmm, which is implemented as first and second order methods in @bib:skfmm.
 The finer details of the FFM algorithm is beyond the scope of this report, but a notable consequence of the formulation of the algorithm is that it is not amenable to parallelisation. While multiple source-receiver pairs may be computed in parallel using CPU cores, the method is not able utilise modern, massively-parallel hardware such as GPUs efficiently.
 
 For this reason, the alternative Fast Sweeping Method (FSM) due to Zhao @bib:fsm-zhao @bib:fsm-zhao-parallel is considered a superior choice for solving the eikonal equation on GPUs, as it more naturally lends itself to parallelisation. Taking the paper @bib:fsm-2nd-order as a reference, `nanopinv` implements both a first and second order version of the parallel FSM algorithms suitable for use with CPU or GPU hardware.
@@ -314,7 +308,7 @@ In order to sample the posterior, $σ_m (vv(m))$, we turn to the theory of Marko
 
 While many algorithms for simulating such processes exist, we will focus on the _Extended Metropolis algorithm_ due to Mosegaard and Tarantola @bib:extended-metropolis whose transition procedure is described in @alg:extended-metropolis. In order to efficiently sample the prior model distribution even for large model spaces, we leverage the Preconditioned Crank-Nicolson proposal algorithm given in @alg:preconditioned-crank-nicolson.
 
-It should be noted that implementations of @alg:extended-metropolis typically work with the log-transformed likelihood and ensure the forward model and likelihood are only evaluated once per model by to improve performance.
+It should be noted that implementations of @alg:extended-metropolis typically work with the log-transformed likelihood and ensure the forward model and likelihood are only evaluated once per set of model parameters by to improve performance.
 
 #nobreak[
   #algorithm-figure(
@@ -476,7 +470,7 @@ Further, we must only consider _accepted_ samples as being drawn from the poster
   placed(top + right, stack(fig-emc-1-burn-in, v(2em), fig-emc-1-samples-likelihood, v(2em), fig-emc-1-samples-acceptance, v(2em), fig-emc-1-samples-autocorrelation))
   container()
   content([
-We set up the `ExtendedMetropolisChain` sampler from `nanopinv` with the proposal algorithm given in @alg:preconditioned-crank-nicolson using the previously obtained prior distribution $ρ_m (vv(m))$ and a step size of $δ = 0.05$. An initial model $vv(m)_0$ is drawn directly from the prior distribution and the $N_"iter" = num("1000")$ steps are taken while recording intermediate samples and acceptance decisions. It is highly likely that the sample drawn from the prior distribution will lie in a region of low likelihood, which leads to the burn-in phenomenon shown in @fig:emc-1-burn-in, where the log#{sym.hyph.nobreak}likelihood is observed to decrease rapidly during the initial steps of the chain before stabilising as the chain diffuses towards a higher likelihood region of the model space.
+We set up the `ExtendedMetropolisChain` sampler from `nanopinv` with the proposal algorithm given in @alg:preconditioned-crank-nicolson using the previously obtained prior distribution $ρ_m (vv(m))$ and a step size of $δ = 0.05$. An initial model $vv(m)_0$ is drawn directly from the prior distribution and the $N_"iter" = num("1000")$ steps are taken while recording intermediate samples and acceptance decisions. It is highly likely that the initial model drawn from the prior distribution will lie in a region of low likelihood, which leads to the burn-in phenomenon shown in @fig:emc-1-burn-in. Here the log#{sym.hyph.nobreak}likelihood is observed to decrease rapidly during the initial steps of the chain before stabilising as the chain diffuses towards a higher likelihood region of the model space.
 
 Using JAX it is particularly easy to run multiple chains in parallel using the `vmap` function. This is useful as it allows us to obtain multiple independent samples, and additionally is a useful way to gauge whether the chains get stuck in local minima by comparing the results of multiple chains initialised with different random seeds. By performing $N_"burn-in" = num("3000")$ steps on $N_"chains" = 10$ chains, and subsequently recording another $N_"samples" = num("10 000")$ samples, we are able to produce a large number of samples. Running the cumulative #num("100 000") steps takes approximately 6 minutes and 30 seconds on an NVIDIA RTX 4090 GPU.
 
@@ -518,7 +512,7 @@ $
 
 where $ξ_k ∈ (0, 1]$ is a _learning rate_ which we decay from a base value $ξ_0$ according to the batch number $k$ and a decay parameter $κ ∈ (1\/2, 1]$. $P_"target"$ denotes the target acceptance rate and $dash(P)_k$ is the observed acceptance rate for the $k$th batch of samples.
 
-This is implemented in `nanopinv` via the `tune` method of the `ExtendedMetropolisChain` class, which for $κ=0.5, ξ_0=0.1, N_"batch"=num("1000")$ produces the tuning history shown in @fig:emc-1-tuning, which converges to a step size of $δ = num("0.808")$ and achieves a acceptance rate of approximately $25%$.
+This is implemented in `nanopinv` via the `tune` method of the `ExtendedMetropolisChain` class, which for $κ=0.5, ξ_0=0.1, N_"batch"=num("1000")$ produces the tuning history shown in @fig:emc-1-tuning and converges to a step size of $δ = num("0.808")$ with a corresponding acceptance rate of approximately $25%$.
 
 ])})
 
@@ -526,11 +520,11 @@ This is implemented in `nanopinv` via the `tune` method of the `ExtendedMetropol
 
 The primary bottle-neck of our current simulations are the long correlation times between the samples. While running multiple chains in parallel is a useful workaround, the performance can be further improved by implementing a _parallel tempering_ scheme. In @sec:sampling-posterior we discussed how the inverse temperature, $β$, can flatten the likelihood landscape, thus allowing much larger steps to be taken without compromising the acceptance rate. With this in mind, we can arrange a ladder of chains with increasing temperatures and individual step sizes. Hotter chains will be able to easily traverse any hills in the likelihood landscape and reach all parts of the model space. Unfortunately, the samples drawn from these hotter chains still cannot be used to garner information about the posterior distribution.
 
-Instead, we propose to swap the states of neighbouring chains on the ladder according to a criterion that preserves _detailed balance_ such that the chains remain in equilibrium at all times. This allows the hot chains to lead the charge in exploring the model space while the coldest chain is still able to draw samples from the true posterior distribution. While the full theory behind the parallel tempering scheme is beyond the scope of this report, an accessible description by Paweł Czyż can be found in @bib:czyz.
+As a result, we propose to swap the states of neighbouring chains on the ladder according to a criterion that preserves _detailed balance_ such that the chains remain in equilibrium at all times. This allows the hot chains to lead the charge in exploring the model space while the coldest chain is still able to draw samples from the true posterior distribution. While the full theory behind the parallel tempering scheme is beyond the scope of this report, an accessible description by Paweł Czyż can be found in @bib:czyz.
 
 In particular, the variant of parallel tempering that is implemented in `nanopinv` is the _Deterministic Even Odd_ (DEO) _non-reversible parallel tempering_ (PT) scheme due to Syed et al. @bib:syed, which is outlined in @alg:non-rev-pt where the DEO variant arises when the parity offset $Ξ$ is alternated between $0$ and $1$ for each swap. This approach has the limitation that chain states can only diffuse by at most one rung on the ladder per swap, which puts a lower bound on the number of swaps required to traverse the ladder and thus the correlation time of the samples.
 
-With this in mind, the authors of @bib:syed introduce the notion of the _communication barrier_, which is used to produce a tuning scheme for the temperature ladder, which is optimally tuned when the swapping rate is uniform across all rungs of the ladder. An implementation of this tuning scheme alongside a Robbins-Monro-based tuning scheme akin to that discussed in @sec:step-size-tuning is implemented in `nanopinv`, closely following that presented in @bib:czyz.
+With this in mind, the authors of @bib:syed introduce the notion of the _communication barrier_. This is used to produce a tuning scheme for the temperature ladder, which is optimally tuned when the swapping rate is uniform across all rungs of the ladder. An implementation of this tuning scheme alongside a Robbins-Monro-based tuning scheme akin to that discussed in @sec:step-size-tuning is implemented in `nanopinv`, closely following that presented in @bib:czyz.
 
 #nobreak[
   #algorithm-figure(
@@ -613,11 +607,11 @@ With this in mind, the authors of @bib:syed introduce the notion of the _communi
 
 The parallel tempering scheme combines with @alg:preconditioned-crank-nicolson and @alg:extended-metropolis by first performing a step of the Extended Metropolis algorithm on each chain in parallel and then performing the non-reversible parallel tempering swap procedure on the ladder of chains.
 
-Importantly, a chain state is considered an _acceptable_ sample of the posterior distribution if it resides on the _cold_ chain after the step and swap and has either been locally updated by the proposal algorithm _or_ has been swapped with its neighbour. Even if the state has just arrived from a hotter chain, it is still considered an acceptable sample as the swap procedure obeys _detailed balance_ and thus the state is still distributed according to the posterior distribution.
+Importantly, a chain state is considered an _acceptable_ sample of the posterior distribution if it resides on the _cold_ chain after both the step-and-swap _and_ has either been locally updated by the proposal algorithm _or_ has been swapped with its neighbour. Even if the state has just arrived from a hotter chain, it is still considered an acceptable sample as the swap procedure obeys _detailed balance_ and thus the state is still distributed according to the posterior distribution.
 
 While a more elegant approach to jointly tune the step sizes and temperatures of the ladder may exist, we resort to iteratively tuning the step sizes and temperatures separately, which is found to converge well for the data used in this report.
 
-=== Obtaining a Tuned Parallel Tempering Sampler
+=== Obtaining a Tuned Parallel Tempering Sampler <sec:tuned-pt>
 
 In order to obtain a tuned parallel tempering sampler we instantiate a ladder of chains and evolve them according to the following procedure:
 + Construct $N_"chains" = 16$ chains:
@@ -639,39 +633,199 @@ After tuning the sampler is run for another #num("1000") steps to ensure the cha
 
 === Validating the `nanopinv` Implementation <sec:validation>
 
-In order to validate the implementation of these algorithms in `nanopinv`, we first tune a parallel tempering sampler as described above and fit an empirical variogram to it in a similar the manner to that of @sec:prior-dist. This variogram is then fitted to a spherical covariance function and found to have a variance $σ^2=num("1.18e-5")$, range $s=5.72$, and a nugget $τ^2=num("1.72e-6")$. The mean of the posterior samples is found to be $μ=num("0.086")$. These are then used to produce a new distribution similar to how the prior distribution was obtained and samples are drawn from it. If the implementation is correct, these samples should have similar isotropic spatial characteristics to true posterior. As such, we may pick a sample that appears physically plausible and where the velocity field is distributed in a manner that can be resolved by the rays traced by the forward model.
+In order to validate the implementation of these algorithms in `nanopinv`, we first tune a parallel tempering sampler as described above and record a number, here approximately $100$, posterior samples. These are then used to produce an empirical variogram which is then fitted to a spherical covariance function and found to have a variance $σ^2=num("1.18e-5")$, range $s=5.72$, and a nugget $τ^2=num("1.72e-6")$. The mean of the posterior samples is found to be $μ=num("0.086")$. These are then used to produce a new distribution similar to how the prior distribution was obtained in @sec:prior-dist and samples are drawn from it. If the implementation is correct, these samples should have similar isotropic, spatial characteristics to true posterior. As such, we may pick a sample that appears physically plausible and where the velocity field is distributed such that it is resolvable by the waves sent between the sources and receivers — due to their positioning in this experiment horizontal features are more easily resolved than vertical ones.
+
+If we then draw such a suitable synthetic sample from the produced distribution and compute its forward model, we obtain a new set of synthetic travel time observations with which, we can again run the full inversion process using the existing prior and likelihood to see how well this synthetic model can be recovered. To sample the posterior in the synthetic experiment, we tune a parallel sampler using a setup similar to that described above — though with shorter tuning and fewer chains. We then run $N_"steps" = num("10000")$ steps and thin the samples appropriately to produce the samples underpinning the reconstruction shown in @fig:test-synthetic-inversion.
+
+#figure(
+  image("export/test_synthetic_inversion_100.png"),
+  caption: "Reconstruction of a synthetic velocity field drawn from the distribution modelled according to the statistics of the posterior samples."
+) <fig:test-synthetic-inversion>
 
 
+#let fig-test-synthetic-residuals = [
+  #box(width: 50%)[
+    #figure(
+      image("export/test_synthetic_residual_50.png"),
+      caption: [
+        Residuals of the travel time observations for the synthetic experiment.
+      ]
+    ) <fig:test-synthetic-residuals>
+  ]
+]
+#right-figs({
+  import meander: *
 
+  placed(top + right, fig-test-synthetic-residuals)
+  container()
+  content([
+It is clear that the reconstruction is far from perfect, but it does capture the general structure of the synthetic phantom and exhibits artefacts commonly found in tomographic reconstructions. In particular, we observe a shift in the lighter region in the bottom left corner towards the center in the reconstruction. This is likely a consequence of the non-uniqueness of the inverse problem, where many differenet solutions may produce similar observations.
+
+By computing the residuals for over all model parameters against the prior and posterior distributions we are able to construct the histograms shown in @fig:test-synthetic-residuals, which reveals that the posterior distribution is narrow, approximately normally distributed, and centred around zero, while the residuals of the prior show a biased and much wider distribution.
+
+This gives credence to both the veracity of the eikonal solver and the correctness of the implementation of the sampling algorithms in `nanopinv`, as well as the overall validity of this probablistic approach to solving the inverse problem.
+  ])
+})
 
 == Porosity and Total Water in Place <sec:physics-porosity>
-In order to obtain estimates of the Total Water In Place (TWIP) over a region of interest, we first relate the phase velocity of the radar waves to the porosity of the medium, $Φ$, through the following empirical relation:
+Before turning to the results of our method applied to the problem in full, we briefly introduce the following empirical relation with which the porosity, $Φ$, of the subsurface may be estimated
 $
   Φ = exp(-41.7 v + 2.03).
-$
+$ <eq:porosity>
+where $v$ is the phase velocity field obtained by the inversion. The origin of this relation is unknown to the author and as such is simply assumed sufficiently accurate for the purposes of this report.
 
-The origin of the relation is unknown to the author and as such is simply assumed sufficiently accurate for the purposes of this report.
-
-The TWIP may be obtained by integrating the porosity over the area of interest:
+We may then introduce the metric of Total Water In Place (TWIP), measures the total area of water contained in the subsurface given a porosity distribution beneath the water table. It is defined simply as the integral of the porosity over the area of interest:
 $
   TWIP
   &= ∫ Φ(vv(r)) dif vv(r)\
   &= ∑_(i=1)^(N_x) ∑_(j=1)^(N_y) Φ_(i j) Δ x Δ y\
-$
+$ <eq:twip>
 where $N_x, N_y$ refer to the number of discretisation points in the $x$ and $y$ directions respectively, and $Δ x, Δ y$ are the corresponding grid spacings.
 
-For the purposes of this report, we define the forward model to be only the solution to the eikonal equation and thus relegate the porosity and TWIP calculations to the post-inversion analysis of the obtained model.
+#pagebreak(weak: true)
 = Results <sec:results>
+
+#let fig-pt-1-samples-log-likelihood = [
+  #box(width: 50%)[
+    #figure(
+      image("export/pt_1_samples-likelihood_50.png"),
+      caption: [
+        Trace of log likelihood values for 10 chains during sampling after burn-in.
+      ]
+    ) <fig-pt-1-samples-log-likelihood>
+  ]
+]
+#let fig-pt-1-samples-proposal-acceptance = [
+  #box(width: 50%)[
+    #figure(
+      image("export/pt_1_samples-proposal-acceptance_50.png"),
+      caption: [
+        Trace of proposal acceptance rate for samples during sampling. Red dashed line indicates $25%$ and black line denotes mean acceptance rate across all chains.
+      ]
+    ) <fig-pt-1-samples-proposal-acceptance>
+  ]
+]
+#let fig-pt-1-samples-swap-acceptance = [
+  #box(width: 50%)[
+    #figure(
+      image("export/pt_1_samples-swap-acceptance_50.png"),
+      caption: [
+        Trace of swap acceptance rate for samples during sampling. Black line denotes mean acceptance rate across all chains.
+      ]
+    ) <fig-pt-1-samples-swap-acceptance>
+  ]
+]
+#let fig-pt-1-samples-autocorrelation = [
+  #box(width: 50%)[
+    #figure(
+      image("export/pt_1_samples-autocorrelation_50.png"),
+      caption: [
+        Autocorrelation of the samples during sampling. Black line denotes mean across all chains.
+      ]
+    ) <fig-pt-1-samples-autocorrelation>
+  ]
+]
+
+#right-figs({
+  import meander: *
+
+  placed(top + right, stack(fig-pt-1-samples-proposal-acceptance, v(2em), fig-pt-1-samples-swap-acceptance, v(2em), fig-pt-1-samples-autocorrelation))
+  container()
+  content([
+
+Having now established the theoretical background and validated the `nanopinv` implementation, we set up a parallel tempering sampler using a proposal distribution constructed using the prior distribution obtained in @sec:prior-dist and Preconditoned Crank-Nicolson algorithm described @alg:preconditioned-crank-nicolson. We again rely on the assumption of uncorrelated and normally distributed data errors in order to arrive at the Gaussian likelihood function described in @sec:likelihood.
+
+The sampler is then initalised following the exact procedure described in @sec:tuned-pt and subsequently iterate through #num("1000") steps after tuning to ensure the chains are in equilibrium at the final parameters.
+
+We then record a further #num("25 000") steps and plot the diagnostic traces in figures #ref(<fig-pt-1-samples-proposal-acceptance>, supplement: none), #ref(<fig-pt-1-samples-swap-acceptance>, supplement: none), and #ref(<fig-pt-1-samples-autocorrelation>, supplement: none). We note that the proposal rate is steady at the target rate of $25%$ while the swap acceptance rate has the correct mean, but has large fluctuations for the low temperature chains. As a consequence, their auto-correlation remains relatively high compared to the higher temperature chains, though still significantly shorter than those of the regular Extended Metropolis sampler presented in @sec:sampling-posterior.
+
+Based on the auto-correlation plot we opt to thin the accepted samples to a minimum interval of $300$ iterations, which produces $81$ uncorrelated samples from the posterior distribution.
+])})
+
+#pagebreak(weak: true)
+
+#let fig-pt-1-inversion-results = [
+  #box(width: 50%)[
+    #figure(
+      image("export/pt_1_inversion_results_50.png"),
+      caption: [
+        Inversion results for the parallel tempering sampler.
+        Dashed black line denotes water table.
+      ]
+    ) <fig:pt-1-inversion-results>
+  ]
+]
+#let fig-data-rays2 = [
+  #box(width: 50%)[
+    #figure(
+      image("export/data_rays_50.png"),
+      caption: "Source and receiver locations with observed travel times overlaid on the model space."
+    ) <fig:data-rays2>
+  ]
+]
+#let fig-pt-1-residuals = [
+  #box(width: 50%)[
+    #figure(
+      image("export/pt_1_residuals_50.png"),
+      caption: "Residuals of the travel time observations for the parallel tempering sampler."
+    ) <fig:pt-1-residuals>
+  ]
+]
+
+
+#right-figs({
+  import meander: *
+
+  placed(top + right, stack(fig-pt-1-inversion-results, v(2em), fig-data-rays2, v(2em), fig-pt-1-residuals))
+  container()
+  content([
+We observe what appears to be good resolution of the velocity field in @fig:pt-1-inversion-results, though the true velocity field is not known and thus it is difficult to make any quantitative statements about the quality of the reconstruction. We note that the variance of the posterior
+
+When compared against the observations shown by the colored rays in @fig:data-rays2 we can see that the reconstructed velocity field is qualitatively consistent with the observed travel times. This is further supported when considering the residuals as shown in @fig:pt-1-residuals. The residuals of the posterior distribution are observed to be normally distributed and centered around zero and the width of the distribution is significantly narrowed compared to the prior distribution.
+
+We observe that the residual distribution is in fact smaller than the a priori data noise. This is an indication that the model is overfitted to the data set, which may be unsurprising given the problem is significantly underdetermined with $41×63=2583$ parameters and only $N_d=758$ data points in the observations. However, the effective parameter space is severely shrunk by the covariance structure of the prior, which acts as a regulariser. Thus it is more likely over-confidence of the obtained posterior is due to invalid assumptions about the prior distribution. Initially suspicion fell on the non-zero nugget, but enforcing a zero nugget did not change the residual histograms meaningfully.
+
+Lastly, we produce estimates of the porosity and total water in place (TWIP) using @eq:porosity and @eq:twip, whereby we find the porosity field and the TWIP in the water table for each sample in the posterior. By then taking the expectation and standard deviation of the TWIP values, we find the total water in place for the subsurface beneath the water table to be #qty("27.02+-0.11", "m^2"). Recall that the water table was given to be the region below elevation $y_*= qty("844.0", "m")$,
+])})
+
+#let fig-pt-1-porosity = [
+  #box(width: 50%)[
+    #figure(
+      image("export/pt_1_samples_porosity_50.png"),
+      caption: "Estimated porosity distribution obtained by applying the empirical relation in @eq:porosity to the velocity field obtained from the inversion."
+    ) <fig:pt-1-porosity>
+  ]
+]
+#right-figs({
+  import meander: *
+
+  placed(top + right, stack(fig-pt-1-porosity))
+  container()
+  content([
+We observe what appears to be good resolution of the velocity field in @fig:pt-1-inversion-results, though the true velocity field is not known and thus it is difficult to make any quantitative statements about the quality of the reconstruction. We note that the variance of the posterior
+
+When compared against the observations shown by the colored rays in @fig:data-rays2 we can see that the reconstructed velocity field is qualitatively consistent with the observed travel times. This is further supported when considering the residuals as shown in @fig:pt-1-residuals. The residuals of the posterior distribution are observed to be normally distributed and centered around zero and the width of the distribution is significantly narrowed compared to the prior distribution.
+
+We observe that the residual distribution is in fact smaller than the a priori data noise. This is an indication that the model is overfitted to the data set, which may be unsurprising given the problem is significantly underdetermined with $41×63=2583$ parameters and only $N_d=758$ data points in the observations. However, the effective parameter space is severely shrunk by the covariance structure of the prior, which acts as a regulariser. Thus it is more likely over-confidence of the obtained posterior is due to invalid assumptions about the prior distribution. Initially suspicion fell on the non-zero nugget, but enforcing a zero nugget did not change the residual histograms meaningfully.
+
+Lastly, we produce estimates of the porosity and total water in place (TWIP) using @eq:porosity and @eq:twip, whereby we find the porosity field and the TWIP in the water table for each sample in the posterior. By then taking the expectation and standard deviation of the TWIP values, we find the total water in place for the subsurface beneath the water table to be #qty("27.02+-0.11", "m^2"). Recall that the water table was given to be the region below elevation $y_*= qty("844.0", "m")$,
+])})
+
+
 
 = Discussion <sec:discussion>
 
+= Further Work <sec:further-work>
+There are many outstanding questions and avenues for further work that arise from this project. In particular, the implementation of additional sampling algorithms such as Hamiltonian Monte Carlo (HMC) and the No-U-Turn Sampler (NUTS) would be a useful addition to `nanopinv` and may provide further efficiency improvements over the current parallel tempering scheme.
+
+Additionally, the benefit of the parallel tempering scheme may be demonstrated on a problem with a highly non-convex likelihood landscape on which regular Extended Metropolis would struggle to explore the model space effectively.
+
+Performance comparisons against existing and alternative implementations of probablistic inversion were initially envisioned as part of this project, but were ultimately abandoned due to time constraints.
+
+Similarly, the supremacy of massively-parallel hardware such as GPUs for solving the forward problem and sampling the distribution was observed by the author during the project, but has yet to be rigourously benchmarked in the manner required to be included in this report.
 
 = Conclusion <sec:conclusion>
-We have employed an Iteratively Reweighted Least Squares (IRLS) algorithm with robust reweighting and Ekblom relaxation of the $L_1$-norm to solve the regularised inverse problem of obtaining the Gauss coefficients of the radial magnetic field expansion in a truncated spherical harmonics basis of degree $N=20$. The forward model relies on the assumption of interior sources, and the regularisation is applied to the projection of the model onto the Core-Mantle Boundary (CMB). This model was constructed using data gathered by the ESA Swarm mission in addition to a similar model using $L_2$-regularisation without data reweighting.
-
-While the inversion is found to be predominantly determined by the a priori choice of regularisation for components of high spatial frequency, both models confidently produce a region of reversed flux beneath the southern Atlantic when evaluated at the CMB. The prediction error of the $L_1$-regularised model was studied under the assumption of univariate and uncorrelated data errors, and the estimated field was determined to be above a $5σ$ threshold over the entire surface with the exception of higher-frequency edges in the reconstruction.
-
-Having considered the influence of the unmodelled ionosphere and magnetosphere, we reject the null-hypothesis of a purely dipolar geomagnetic model and find evidence supporting the existence of the South Atlantic Anomaly (SAA). We do so with reference to the obtained confidence of prediction and the ability of the proposed model to resolve features of spatial frequencies similar to that of the flux reversal region.
+TODO
 
 #pagebreak(weak: true)
 = Bibliography <bib>
@@ -685,12 +839,9 @@ Having considered the influence of the unmodelled ionosphere and magnetosphere, 
 == Student Feedback on Assignment
 The assignment description is relatively sparse with details about the experiment and the experimental design. It is difficult to come up with this after the fact without knowing where the data came from.
 
-In particular:
 - The assignment incorrectly states that there are 758 sources and receivers. The correct numbers are given in @sec:experiment-data.
-- The GPR carrier frequencies are not given, which makes it difficult to reason about the validity of the high-frequency assumption that arises in the derivation of the forward model through the eikonal equation. See @born-optics[3.1.1].
+- The GPR carrier frequencies are not given, which makes it difficult to reason about the validity of the high-frequency assumption that arises in the derivation of the forward model through the eikonal equation.
 - The dates and location of the data collection are not available.
-- Maybe assumed/obivous, but is elevation relative to sea level?
-- I suspect the truncation error of the solvers may be significant for $Δ x = Δ y = #qty("0.25", "m")$
 
 // == Large Plot of Solution to $L_2$-regularised Problem <app:l2-plot>
 // #figure(
