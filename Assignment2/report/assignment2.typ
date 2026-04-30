@@ -47,7 +47,7 @@
 ]
 #let right-figs(inner) = steal-margin[#meander.reflow(inner)]
 
-#set document(title: "Report on Probablistic Inversion and Cross Hole GPR Tomography")
+#set document(title: "Report on Probabilistic Inversion and Cross Hole GPR Tomography")
 #let authors = (
   [Jeppe Klitgaard #link("emailto:s250250@dtu.dk", raw("<s250250@dtu.dk>"))],
 )
@@ -59,7 +59,7 @@
   #set text(size: 12pt)
   = Abstract
 
-TODO
+Cross-Hole Ground Penetrating Radar (GPR) tomography presents a highly non-linear and ill-posed inverse problem. We demonstrate the use of the optionally GPU-accelerated probabilistic inversion framework `nanopinv` to efficiently reconstruct 2D spatial distributions of phase velocities from travel-time measurements at the Boise Hydrogeophysical Research Site (BHRS). The forward problem is governed by the eikonal equation, which is solved using a second-order Fast Sweeping Method (FSM). We combine this with a Gaussian spatial prior and a Preconditioned Crank-Nicolson proposal to sample the posterior distribution via the Extended Metropolis algorithm and a Deterministic Even-Odd (DEO) Non-Reversible Parallel Tempering scheme. The method successfully reconstructs the velocity and porosity fields at the site, estimating the Total Water In Place (TWIP) beneath the water table to be #qty("27.02+-0.11","m^2").
 ]
 
 #frontpage-1(front-content: abstract, authors: authors, date: datetime(year: 2026, month: 3, day: 19))
@@ -69,7 +69,6 @@ TODO
 #set heading(numbering: none)
 #outline()
 
-#v(10mm)
 = Artificial Intelligence Declaration
 The body of work presented below is solely authored by the author of this document, Jeppe Klitgaard, and none of the presented material has been produced by means of _Generative AI_ in the manner requiring citation as described by @ref:dtu-genai outside the entries listed below.
 
@@ -175,7 +174,7 @@ As shown in @bib:tarantola2005[Eq. 1.83], these distributions may be combined to
 $
   σ(vv(m), vv(d)) = k (ρ(vv(m), vv(d)) θ(vv(d), vv(m)))/(μ(vv(m), vv(d))),
 $
-where $k$ is a normalisation constant and $μ(vv(m), vv(d))$ is the _joint homogenous probability density function_. This further simplies to the _posterior model distribution_ under the following treatment
+where $k$ is a normalisation constant and $μ(vv(m), vv(d))$ is the _joint homogenous probability density function_. This further simplifies to the _posterior model distribution_ under the following treatment
 $
   σ_m (vv(m))
   &= k ∫_cal(D) (ρ(vv(m), vv(d)) θ(vv(d), vv(m)))/(μ(vv(m), vv(d))) dif vv(d)
@@ -289,17 +288,17 @@ This is an valuable metric to keep in mind, as it also provides a useful scale o
 === Numerical Solution of the Forward Problem <sec:theory-eikonal-solution>
 In order to compute the forward projection of a given model, here understood to be a discretised spatial distribution of phase velocities, we must solve @eq:eikonal-travel-time, and ideally do so as efficiently as possible.
 
-A popular choice of algorithm dedicated to solving the family of equations to which the eikonal equation belongs is the Fast Marching Method (FMM) due to Sethian @bib:fmm, which is implemented as first and second order methods in @bib:skfmm.
-The finer details of the FFM algorithm is beyond the scope of this report, but a notable consequence of the formulation of the algorithm is that it is not amenable to parallelisation. While multiple source-receiver pairs may be computed in parallel using CPU cores, the method is not able utilise modern, massively-parallel hardware such as GPUs efficiently.
+A popular choice of algorithm dedicated to solving the family of equations to which the eikonal equation belongs is the Fast Marching Method (FMM) due to Sethian @bib:fmm, which is implemented as first and second-order methods in @bib:skfmm.
+The finer details of the FMM algorithm is beyond the scope of this report, but a notable consequence of the formulation of the algorithm is that it is not amenable to parallelisation. While multiple source-receiver pairs may be computed in parallel using CPU cores, the method is not able utilise modern, massively-parallel hardware such as GPUs efficiently.
 
-For this reason, the alternative Fast Sweeping Method (FSM) due to Zhao @bib:fsm-zhao @bib:fsm-zhao-parallel is considered a superior choice for solving the eikonal equation on GPUs, as it more naturally lends itself to parallelisation. Taking the paper @bib:fsm-2nd-order as a reference, `nanopinv` implements both a first and second order version of the parallel FSM algorithms suitable for use with CPU or GPU hardware.
+For this reason, the alternative Fast Sweeping Method (FSM) due to Zhao @bib:fsm-zhao @bib:fsm-zhao-parallel is considered a superior choice for solving the eikonal equation on GPUs, as it more naturally lends itself to parallelisation. Taking the paper @bib:fsm-2nd-order as a reference, `nanopinv` implements both a first and second-order version of the parallel FSM algorithms suitable for use with CPU or GPU hardware.
 
 Common to all the implementations is that they produce an approximation of the travel time $T$ from a source $vv(r)_s$ to all other points in the model space when given a propagation velocity field $v(vv(r))$.
 The estimated travel time to the receivers, $vv(r)_r$, may then be obtained by interpolation. @fig:forward-model-prior-samples shows the forward projections obtained by the 2nd order FSM solver for three samples drawn from the prior distribution obtained in @sec:prior-dist.
 
 #figure(
   image("export/forward_model_prior_samples.png"),
-  caption: "Comparison of the travel time fields obtained by the first and second order FSM implementations for a given velocity field."
+  caption: "Comparison of the travel time fields obtained by the first and second-order FSM implementations for a given velocity field."
 ) <fig:forward-model-prior-samples>
 
 == Markov Chain Monte Carlo Methods <sec:theory-mcmc>
@@ -413,7 +412,7 @@ It should be noted that implementations of @alg:extended-metropolis typically wo
 
 === Sampling the Posterior <sec:sampling-posterior>
 
-By using these algorithms with sufficient care, we will be able to sample from the posterior distribution of the model parameters, $σ_m (vv(m))$. Firstly, the choice of the step size, $δ$, will have significant influence on the efficiency with which we can sample. By inspecting the proposal algorithm in @alg:preconditioned-crank-nicolson, it is clear that a larger step size will retain less of the current model and instead be more heavily influenced by the sample drawn from the prior distribution. As such, a larger step size will more aggressively explore the model space. This is of course desirable, but comes at the cost of a lower acceptance rate as many of the proposed models will inevitably lie in regions of low likelihood inside the model space. Conversely, if the chosen step size is too small, the acceptance rate will be high, but the chain will be slow to explore the model space and will be more likely to get stuck in local valleys within the modal space, thus failing to accurately sample the posterior. The literature generally favours a step size corresponding to an acceptance rate of approximately $25%$.
+By using these algorithms with sufficient care, we will be able to sample from the posterior distribution of the model parameters, $σ_m (vv(m))$. Firstly, the choice of the step size, $δ$, will have significant influence on the efficiency with which we can sample. By inspecting the proposal algorithm in @alg:preconditioned-crank-nicolson, it is clear that a larger step size will retain less of the current model and instead be more heavily influenced by the sample drawn from the prior distribution. As such, a larger step size will more aggressively explore the model space. This is of course desirable, but comes at the cost of a lower acceptance rate as many of the proposed models will inevitably lie in regions of low likelihood inside the model space. Conversely, if the chosen step size is too small, the acceptance rate will be high, but the chain will be slow to explore the model space and will be more likely to get stuck in local valleys within the model space, thus failing to accurately sample the posterior. The literature generally favours a step size corresponding to an acceptance rate of approximately $25%$.
 
 The second important hyperparameter is the inverse temperature, $β ∈ (0, 1]$, which directly affects the acceptance probability of the proposed models. As $β$ goes towards zero, the acceptance probability approaches unity, and as such the inverse temperature may be understood to effectively flatten the likelihood landscape thus making it easier to traverse. This comes with the unfortunate consequence that samples drawn during simulations away from unit inverse temperature are not distributed according to the true posterior distrubution. As such, we concern ourselves only with _cold sampling_ at $β=1$ for now.
 
@@ -733,9 +732,9 @@ where $N_x, N_y$ refer to the number of discretisation points in the $x$ and $y$
   container()
   content([
 
-Having now established the theoretical background and validated the `nanopinv` implementation, we set up a parallel tempering sampler using a proposal distribution constructed using the prior distribution obtained in @sec:prior-dist and Preconditoned Crank-Nicolson algorithm described @alg:preconditioned-crank-nicolson. We again rely on the assumption of uncorrelated and normally distributed data errors in order to arrive at the Gaussian likelihood function described in @sec:likelihood.
+Having now established the theoretical background and validated the `nanopinv` implementation on parts of the dataset, we set up a parallel tempering sampler using a proposal distribution constructed using the prior distribution obtained in @sec:prior-dist and Preconditoned Crank-Nicolson algorithm described @alg:preconditioned-crank-nicolson. We again rely on the assumption of uncorrelated and normally distributed data errors in order to arrive at the Gaussian likelihood function described in @sec:likelihood.
 
-The sampler is then initalised following the exact procedure described in @sec:tuned-pt and subsequently iterate through #num("1000") steps after tuning to ensure the chains are in equilibrium at the final parameters.
+The sampler is then initialised following the exact procedure described in @sec:tuned-pt and subsequently iterate through #num("1000") steps after tuning to ensure the chains are in equilibrium at the final parameters.
 
 We then record a further #num("25 000") steps and plot the diagnostic traces in figures #ref(<fig-pt-1-samples-proposal-acceptance>, supplement: none), #ref(<fig-pt-1-samples-swap-acceptance>, supplement: none), and #ref(<fig-pt-1-samples-autocorrelation>, supplement: none). We note that the proposal rate is steady at the target rate of $25%$ while the swap acceptance rate has the correct mean, but has large fluctuations for the low temperature chains. As a consequence, their auto-correlation remains relatively high compared to the higher temperature chains, though still significantly shorter than those of the regular Extended Metropolis sampler presented in @sec:sampling-posterior.
 
@@ -779,11 +778,9 @@ Based on the auto-correlation plot we opt to thin the accepted samples to a mini
   placed(top + right, stack(fig-pt-1-inversion-results, v(2em), fig-data-rays2, v(2em), fig-pt-1-residuals))
   container()
   content([
-We observe what appears to be good resolution of the velocity field in @fig:pt-1-inversion-results, though the true velocity field is not known and thus it is difficult to make any quantitative statements about the quality of the reconstruction. We note that the variance of the posterior
+We observe what appears to be good resolution of the velocity field in @fig:pt-1-inversion-results, though the true velocity field is not known and thus it is difficult to make any quantitative statements about the quality of the reconstruction.
 
 When compared against the observations shown by the colored rays in @fig:data-rays2 we can see that the reconstructed velocity field is qualitatively consistent with the observed travel times. This is further supported when considering the residuals as shown in @fig:pt-1-residuals. The residuals of the posterior distribution are observed to be normally distributed and centered around zero and the width of the distribution is significantly narrowed compared to the prior distribution.
-
-We observe that the residual distribution is in fact smaller than the a priori data noise. This is an indication that the model is overfitted to the data set, which may be unsurprising given the problem is significantly underdetermined with $41×63=2583$ parameters and only $N_d=758$ data points in the observations. However, the effective parameter space is severely shrunk by the covariance structure of the prior, which acts as a regulariser. Thus it is more likely over-confidence of the obtained posterior is due to invalid assumptions about the prior distribution. Initially suspicion fell on the non-zero nugget, but enforcing a zero nugget did not change the residual histograms meaningfully.
 
 Lastly, we produce estimates of the porosity and total water in place (TWIP) using @eq:porosity and @eq:twip, whereby we find the porosity field and the TWIP in the water table for each sample in the posterior. By then taking the expectation and standard deviation of the TWIP values, we find the total water in place for the subsurface beneath the water table to be #qty("27.02+-0.11", "m^2"). Recall that the water table was given to be the region below elevation $y_*= qty("844.0", "m")$,
 ])})
@@ -792,7 +789,9 @@ Lastly, we produce estimates of the porosity and total water in place (TWIP) usi
   #box(width: 50%)[
     #figure(
       image("export/pt_1_samples_porosity_50.png"),
-      caption: "Estimated porosity distribution obtained by applying the empirical relation in @eq:porosity to the velocity field obtained from the inversion."
+      caption: [
+        Estimated porosity distribution obtained by applying the empirical relation in @eq:porosity to the velocity field obtained from the inversion.
+      ]
     ) <fig:pt-1-porosity>
   ]
 ]
@@ -802,21 +801,75 @@ Lastly, we produce estimates of the porosity and total water in place (TWIP) usi
   placed(top + right, stack(fig-pt-1-porosity))
   container()
   content([
-We observe what appears to be good resolution of the velocity field in @fig:pt-1-inversion-results, though the true velocity field is not known and thus it is difficult to make any quantitative statements about the quality of the reconstruction. We note that the variance of the posterior
-
-When compared against the observations shown by the colored rays in @fig:data-rays2 we can see that the reconstructed velocity field is qualitatively consistent with the observed travel times. This is further supported when considering the residuals as shown in @fig:pt-1-residuals. The residuals of the posterior distribution are observed to be normally distributed and centered around zero and the width of the distribution is significantly narrowed compared to the prior distribution.
-
-We observe that the residual distribution is in fact smaller than the a priori data noise. This is an indication that the model is overfitted to the data set, which may be unsurprising given the problem is significantly underdetermined with $41×63=2583$ parameters and only $N_d=758$ data points in the observations. However, the effective parameter space is severely shrunk by the covariance structure of the prior, which acts as a regulariser. Thus it is more likely over-confidence of the obtained posterior is due to invalid assumptions about the prior distribution. Initially suspicion fell on the non-zero nugget, but enforcing a zero nugget did not change the residual histograms meaningfully.
-
-Lastly, we produce estimates of the porosity and total water in place (TWIP) using @eq:porosity and @eq:twip, whereby we find the porosity field and the TWIP in the water table for each sample in the posterior. By then taking the expectation and standard deviation of the TWIP values, we find the total water in place for the subsurface beneath the water table to be #qty("27.02+-0.11", "m^2"). Recall that the water table was given to be the region below elevation $y_*= qty("844.0", "m")$,
+== Effect of solver errors <sec:solver-errors>
+All results shown so far have been made with the second-order FSM solver introduced in @sec:theory-eikonal-solution, but similar experiments were carried out using the first order FSM solver and both the first and second-order FMM solver from `scikit-fmm` @bib:skfmm. Remarkably, the 2nd order solvers produce nearly identical results, as may be seen by comparing second-order FMM result shown in @fig:fmm-2nd-order with the 2nd order FSM result in @fig:pt-1-porosity. Similarly, the first order methods shown in @fig:fmm-1st-order and @fig:fsm-1st-order are in good agreement with each other, but produce significantly different results to the second-order methods.
 ])})
 
+#figure(
+  image("manual/fmm_2nd_order.png", width: 60%),
+  caption: [
+    Inversion results obtained using the second-order FMM solver from `scikit-fmm`. Only 15 samples were used and they were averaged to produce a single velocity from which the porosity is computed. This should be improved, but was not due to time constraints.
+  ]
 
+) <fig:fmm-2nd-order>
+
+#let fig-fmm-1st-order = [
+  #box[
+    #figure(
+      image("manual/fmm_1st_order.png", width: 70%),
+      caption: [
+        Inversion results obtained using the first order FMM solver from `scikit-fmm`. Similar caveats to @fig:fmm-2nd-order
+      ]
+    ) <fig:fmm-1st-order>
+  ]
+]
+#let fig-fsm-1st-order = [
+  #box[
+    #figure(
+      image("manual/fsm_1st_order.png", width: 70%),
+      caption: [
+        Inversion results obtained using the first order FSM solver. Similar caveats to @fig:fmm-2nd-order
+      ]
+    ) <fig:fsm-1st-order>
+  ]
+]
+
+#grid(
+  columns: 2,
+  fig-fmm-1st-order,
+  fig-fsm-1st-order,
+)
 
 = Discussion <sec:discussion>
 
+== Ill-posedness of the problem
+
+As evidenced by the results of @sec:validation covering the synthetic test set, the tomographic problem is highly non-unique and the limited angles of the radar rays negatively affect the resolution in the horizontal direction. Given the apparent smoothness and convexity of the likelihood landscape as seen using the regular Extended Metropolis algorithm in @sec:sampling-posterior, the inversion appears to be relatively stable. As such, the ill-posedness of the inverse problem arises primarily from its lack of uniqueness.
+
+== Overfitting
+We observe in @fig:pt-1-residuals that the residual distribution is in fact smaller than the a priori data noise. This is an indication that the model is overfitted to the data set, which may be unsurprising given the problem is significantly under-determined with $41×63=2583$ parameters and only $N_d=758$ data points in the observations. However, the effective parameter space is severely shrunk by the covariance structure of the prior, which acts as a regulariser, thus preventing the many parameters of the model from entering as full degrees of freedom.
+
+== Prior Assumptions
+With this in mind, we hypothesise that the over-confidence of the obtained posterior is due to invalid assumptions about the prior distribution. Initial suspicion fell on the non-zero nugget, but enforcing a zero nugget did not change the residual histograms meaningfully.
+
+The modelled posterior appears to violate the assumption of isotropy made for the prior distribution. This assumption also fails on physical grounds, as domain knowledge suggests that we would expect the some horizontal stratification of the velocity field due to the geological processes that formed the subsurface. This causes the chosen covariance structure of the prior to be a poor fit for the true distribution.
+
+The violation of these prior assumptions may be a significant contributor to the overfitting of the model to the data as observed in the residual histograms in @fig:pt-1-residuals.
+
+== Solver Errors
+Further, the disagreement between the first and second-order solvers observed in @sec:solver-errors suggests that the truncation error of the solvers is substantial and does introduce significant biases in the reconstruction. This violates the assumption that the data errors dominate the residuals and thus the likelihood obtained in @sec:likelihood does not correctly normalise these residuals. This further contributes to the overfitting of the model to the data.
+
+== Experimental Limitations
+As initially highlighted in @sec:theory-physics, it is likely that the high-frequency assumption that leads to the eikonal equation is violated for the GPR data used in this experiment. Without further information about the experimental parameters, it is difficult to gauge whether the data is collected in the high-frequency limit and what the volume of the first Fresnel zone may be. As such, it may be that the spatial structure of the velocity field is substantially finer than the resolution of the data, which would lead to smoothening of the reconstructed velocity field. The obtained velocity fields are relatively smooth and have characteristic length scales at the same order of magnitude as the resolution limit hypothesised in @sec:theory-physics.
+
+Further, the propagation of the radar waves through the subsurface happens in three dimensions, but the model is limited to two dimensions. This implies that the rays may propagate through unmodelled regions of the subsurface which may bias the reconstruction from the data. This further contributes to the ill-posedness of the problem due to a lack of uniqueness.
+
+== Efficiency of Parallel Tempering
+The parallel tempering scheme requires substantially more computational time to tune, which may not outweigh its benefits for this particular problem. It allows for efficient sampling of the whole model space, but as observed in @sec:validation, the model space appears to be smooth and convex, thus leading to the regular Extended Metropolis algorithm being able to competently explore the model space. These parallel, cold chains do suffer from substantially longer correlation times than what can be achieved with parallel tempering, but have the significant advantage that all chains produce samples that are candidates of the posterior distribution, and additionally are much simpler and faster to tune. For this reason, we find that the regular Extended Metropolis algorithm is a sufficient choice for this problem.
+
+
 = Further Work <sec:further-work>
-There are many outstanding questions and avenues for further work that arise from this project. In particular, the implementation of additional sampling algorithms such as Hamiltonian Monte Carlo (HMC) and the No-U-Turn Sampler (NUTS) would be a useful addition to `nanopinv` and may provide further efficiency improvements over the current parallel tempering scheme.
+In addition to further investigating the areas highlighted in the discussion above, there are many outstanding questions and avenues for further work that arise from this project. In particular, the implementation of additional sampling algorithms such as Hamiltonian Monte Carlo (HMC) and the No-U-Turn Sampler (NUTS) would be a useful addition to `nanopinv` and may provide further efficiency improvements over the current parallel tempering scheme.
 
 Additionally, the benefit of the parallel tempering scheme may be demonstrated on a problem with a highly non-convex likelihood landscape on which regular Extended Metropolis would struggle to explore the model space effectively.
 
@@ -825,7 +878,11 @@ Performance comparisons against existing and alternative implementations of prob
 Similarly, the supremacy of massively-parallel hardware such as GPUs for solving the forward problem and sampling the distribution was observed by the author during the project, but has yet to be rigourously benchmarked in the manner required to be included in this report.
 
 = Conclusion <sec:conclusion>
-TODO
+We conclude that the `nanopinv` implementation and the employment of both standard extended Metropolis and parallel tempering samplers are successful in producing a reconstruction of the electromagnetic velocity field within the subsurface of the test site at the Boise Hydrogeophysics Research Site (BHRS). Using an a priori empirical relation between velocity and porosity we can further present an estimate of the posterior porosity distribution at the experimental site and produce estimates of the total water in place (TWIP) beneath the water table, which was found to be #qty("27.02+-0.11", "m^2").
+
+It should be noted that the observed discrepancy between the residuals of the posterior distribution and the a priori data noise is an indication of overfitting, which is believed to be a consequence of violations in the assumptions of the prior distribution and the potential presence of significant truncation errors in the second-order solvers used to compute the forward model. Consequently, the variance of the obtained posterior distribution is believed to be underestimated and thus the confidence in the obtained estimate of the TWIP is likely overestimated.
+
+Lastly, we have demonstrated a performant implementation of probabilistic inversion that can easily leverage massively parallel hardware such as GPUs to solve the forward problem and sample the posterior distribution.
 
 #pagebreak(weak: true)
 = Bibliography <bib>
@@ -836,17 +893,9 @@ TODO
 #set heading(numbering: "A.1", supplement: "Appendix")
 = Appendix <app>
 
-== Student Feedback on Assignment
+== Cautious Student Feedback on Assignment
 The assignment description is relatively sparse with details about the experiment and the experimental design. It is difficult to come up with this after the fact without knowing where the data came from.
 
 - The assignment incorrectly states that there are 758 sources and receivers. The correct numbers are given in @sec:experiment-data.
 - The GPR carrier frequencies are not given, which makes it difficult to reason about the validity of the high-frequency assumption that arises in the derivation of the forward model through the eikonal equation.
 - The dates and location of the data collection are not available.
-
-// == Large Plot of Solution to $L_2$-regularised Problem <app:l2-plot>
-// #figure(
-//   image("export/L2_field_map_v2.png"),
-//   caption: [
-//     // Large version of the plot shown in @fig:l2-solutions (b)
-//   ]
-// )
