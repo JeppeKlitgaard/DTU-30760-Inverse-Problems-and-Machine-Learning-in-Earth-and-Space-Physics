@@ -215,11 +215,13 @@ def plot_field(
     plot_water_table: bool = True,
     water_table_elevation: float = 844.0,
     auto_truncate: bool = True,
+    vmin=None,
+    vmax=None,
 ):
     ax = _get_ax(ax)
 
     # Imshow Field
-    im = ax.imshow(field.T, origin="lower", extent=extent, cmap=cmap)
+    im = ax.imshow(field.T, origin="lower", extent=extent, cmap=cmap, vmin=vmin, vmax=vmax)
 
     if plot_cbar:
         # Dynamically attach the colorbar to the drawn axes
@@ -521,7 +523,32 @@ def log_likelihood_gaussian(data, data_obs, data_std: float) -> Float[Array, ""]
     log_likelihood = -0.5 * jnp.sum(normalised_residual**2)
     return jnp.sum(log_likelihood)
 
+elevations = model_grid_y
+water_table_elevation = 844.0
+water_table_y = model_grid_y[model_grid_y < water_table_elevation]
+extent_water_table = [
+    np.min(model_grid_x),
+    np.max(model_grid_x),
+    np.min(water_table_y),
+    np.max(water_table_y),
+]
 
+@eqx.filter_jit
+def porosity(velocity):
+    # Equation (1) from assignment
+    return jnp.exp(-41.7 * velocity + 2.03)
+
+
+def extract_water_table(field, elevations=elevations, cut_off_elevation: float = water_table_elevation):
+    mask = elevations < cut_off_elevation
+    water_table = field[:, mask]
+    return water_table
+
+def total_water_in_place(porosity_field, model_grid_dx=model_grid_dx, model_grid_dy=model_grid_dy):
+    total_porosity = jnp.sum(porosity_field)
+    cell_area = model_grid_dx * model_grid_dy
+    water_volume = total_porosity * cell_area
+    return water_volume
 # %% [markdown]
 # # Sample: EMC 1
 

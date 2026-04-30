@@ -71,19 +71,13 @@
 
 #v(10mm)
 = Artificial Intelligence Declaration
+The body of work presented below is solely authored by the author of this document, Jeppe Klitgaard, and none of the presented material has been produced by means of _Generative AI_ in the manner requiring citation as described by @ref:dtu-genai outside the entries listed below.
 
-TODO:
-
-The body of work presented below is solely authored by the author of this document, Jeppe Klitgaard,, and none of the presented material has been produced by means of _Generative AI_ in the manner requiring citation as described by @ref:dtu-genai outside the entries listed below.
-
-Generative AI has, however, been used selectively in the generation of limited parts of the code. GitHub Copilot tab-completion has been used during the development of the attached code and in the generation of an initial version of the following, which is also clearly sign-posted by comments in the attached code:
+Generative AI has, however, been used selectively in the generation of limited parts of the code. GitHub Copilot tab-completion has been used during the development of the attached code and in the generation of an initial version of the following entries:
 - Some parts of `nanopinv` (which falls outside the examined material of this report), in particular:
   - A number of implementations of the Fast Sweeping Method
   - Boiler-plate code around benchmarking and testing these implementations
-
-- Initial version of the plotting code for the residual plot
-- Alternative L-curve corner finding algorithm: Normalised Menger Curvature
-- Alternative L-curve corner finding algorithm: Chord Distance
+  - Initial implementations for the plotting methods supported by the `History` class
 
 The generated code output has in all instances been checked and often revised by the authors and is _not_ considered to be a _significant_ contribution to total intellectual work undertaken and presented.
 
@@ -108,32 +102,15 @@ The generated code output has in all instances been checked and often revised by
 
 = Introduction <sec:intro>
 
-This report seeks to demonstrate the use of probabilistic inversion techniques to solve the non-linear inverse problem of Ground Penetrating Radar (GPR) Tomography in which the spatial distribution of the electromagnetic phase velocities in the subsurface are reconstructed from observed travel times of radar waves.
+This report seeks to demonstrate the use of probabilistic inversion techniques to solve the non-linear inverse problem of Ground Penetrating Radar (GPR) Tomography in which the spatial distribution of the electromagnetic phase velocities through the subsurface are reconstructed from observed travel times of radar waves between sources and receivers located in two nearby boreholes.
 
 In order to produce the results presented in this report, we have developed a performant Python library, `nanopinv`, which is able to achieve accurate reconstructions of the modelled field by sampling the posterior distribution of the modelled field using Markov Chain Monte Carlo (MCMC) methods. The library is implemented in JAX @bib:jax and can efficiently leverage multiple CPU cores or GPU hardware.
 
 The performance of the library is further enhanced by implementations of the Fast Sweeping Method (FSM) @bib:fsm-zhao for solving the eikonal equation and enables to user to rapidly obtain independent samples by leveraging the Parallel Tempering method.
 
-
-// The data may then be used to formulate a classic tomographic inverse problem in which the spatial distribution of the electromagnetic phase velocity is reconstructed from the observed travel times through the medium between the boreholes.
-
-TODO: Structure of report deviates...
-
-
-// This report seeks to determine the radial magnetic field, $B_r$, at the Core-Mantle Boundary (CMB) of the Earth using data collected as part of the three-satellite ESA Swarm mission. This may be considered as an _inverse problem_ in which the model space is spanned by the Gauss coefficients of the expansion of the projection onto the spherical harmonics.
-
-// A derivation of the forward model is presented using the Ampère-Maxwell law and the assumption of interior sources after which the relevant theory from regularisation theory and the study of inverse problems is laid out. The inversion, which produces a model from a set of observations, is proposed to be carried out using either $L_2$ or $L_1$ regularisation applied to the projection of the model onto the CMB. The $L_1$-regularised case is solved using the proposed Iteratively Reweighted Least Squares (IRLS) algorithm with robust weights.
-
-// Suitable candidates for the regularisation parameters, $α^2$, are determined by grid searches and the familiar L-curve heuristic after which the resulting models are used to reconstruct predictions of the radial field at the CMB. Estimates of the model uncertainties and their resolution are carried out alongside an estimated prediction confidence found using the plug-in principle and the assumption of univariate, uncorrelated noise.
-
-// The results in the form of model projections onto the CMB and associated power spectra are then evaluated against the dipole model of the geomagnetic field, which serves as the null-hypothesis of this report. The outcomes of both the $L_2$ and robust $L_1$-regularised models are compared with particular consideration of the bias introduced by the regularisation terms.
-
-// Lastly, the findings of the report are summarised and the conclusion is presented.
+The structure of the report deviates from the typical layout of an experimental report and instead interleaves theory and results. This choice is made in the interest of sparing the reader the rather hefty theory section featured in the first draft of the report. Further, the exploratory and interdisciplinary nature of the project incentivises a less rigid structure in which theory and design choices are introduced as they become relevant to the discussion of the results. Alternatively, the reader may simply regard @sec:theory as a lengthy theory section with accompanying examples, which is followed by more focused results and discussions sections in @sec:results and @sec:discussion respectively.
 
 = Data and Experimental Design <sec:experiment-data>
-
-
-
 #let fig-data-rays = [
   #box(width: 50%)[
     #figure(
@@ -331,8 +308,6 @@ The estimated travel time to the receivers, $vv(r)_r$, may then be obtained by i
   caption: "Comparison of the travel time fields obtained by the first and second order FSM implementations for a given velocity field."
 ) <fig:forward-model-prior-samples>
 
-==
-
 == Markov Chain Monte Carlo Methods <sec:theory-mcmc>
 
 In order to sample the posterior, $σ_m (vv(m))$, we turn to the theory of Markov Chains and Monte Carlo sampling, in which a chain of samples is generated by a Markov process — that is, a process in which the next state depends only on the current state.
@@ -392,10 +367,7 @@ It should be noted that implementations of @alg:extended-metropolis typically wo
       let Solve = Call.with("Solve")
       let Input(doc) = Line([*input*~#context box(doc, baseline: 100% - par.leading)])
       let Output(doc) = Line([*output*~#context box(doc, baseline: 100% - par.leading)])
-      let True = [
-        #context let current-font = text.font
-        #set text(font: "Andale Mono")
-        #smallcaps("true")]
+      let True = [#smallcaps("true")]
       let False = [#smallcaps("false")]
       Procedure(
         "ExtendedMetropolisStep",
@@ -445,33 +417,234 @@ It should be noted that implementations of @alg:extended-metropolis typically wo
 
 
 
-=== Sampling the Posterior
+=== Sampling the Posterior <sec:sampling-posterior>
 
 By using these algorithms with sufficient care, we will be able to sample from the posterior distribution of the model parameters, $σ_m (vv(m))$. Firstly, the choice of the step size, $δ$, will have significant influence on the efficiency with which we can sample. By inspecting the proposal algorithm in @alg:preconditioned-crank-nicolson, it is clear that a larger step size will retain less of the current model and instead be more heavily influenced by the sample drawn from the prior distribution. As such, a larger step size will more aggressively explore the model space. This is of course desirable, but comes at the cost of a lower acceptance rate as many of the proposed models will inevitably lie in regions of low likelihood inside the model space. Conversely, if the chosen step size is too small, the acceptance rate will be high, but the chain will be slow to explore the model space and will be more likely to get stuck in local valleys within the modal space, thus failing to accurately sample the posterior. The literature generally favours a step size corresponding to an acceptance rate of approximately $25%$.
 
 The second important hyperparameter is the inverse temperature, $β ∈ (0, 1]$, which directly affects the acceptance probability of the proposed models. As $β$ goes towards zero, the acceptance probability approaches unity, and as such the inverse temperature may be understood to effectively flatten the likelihood landscape thus making it easier to traverse. This comes with the unfortunate consequence that samples drawn during simulations away from unit inverse temperature are not distributed according to the true posterior distrubution. As such, we concern ourselves only with _cold sampling_ at $β=1$ for now.
 
-=== Step size tuning
+Further, we must only consider _accepted_ samples as being drawn from the posterior distribution, and must additionally take care that the drawn samples are sufficiently decorrelated from one another as they would otherwise bias our estimate of the posterior distribution.
 
+#let fig-emc-1-burn-in = [
+  #box(width: 50%)[
+    #figure(
+      image("export/emc_1_burn-in_50.png"),
+      caption: [
+        Trace log likelihood during the burn-in phase of the Extended Metropolis algorithm.
+        ]
+    ) <fig:emc-1-burn-in>
+  ]
+]
 
+#let fig-emc-1-samples-likelihood = [
+  #box(width: 50%)[
+    #figure(
+      image("export/emc_1_samples-likelihood_50.png"),
+      caption: [
+        Trace of log likelihood values for 10 chains during sampling after burn-in.
+      ]
+    ) <fig:emc-1-samples-likelihood>
+  ]
+]
 
+#let fig-emc-1-samples-acceptance = [
+  #box(width: 50%)[
+    #figure(
+      image("export/emc_1_samples-acceptance_50.png"),
+      caption: [
+        Trace of acceptance rate for samples during sampling. Red dashed line indicates $25%$ and black line denotes mean acceptance rate across all chains.
+      ]
+    ) <fig:emc-1-samples-acceptance>
+  ]
+]
 
+#let fig-emc-1-samples-autocorrelation = [
+  #box(width: 50%)[
+    #figure(
+      image("export/emc_1_samples-autocorrelation_50.png"),
+      caption: [
+        Autocorrelation of the samples during sampling. Black line denotes mean across all chains.
+      ]
+    ) <fig:emc-1-samples-autocorrelation>
+  ]
+]
 
+#pagebreak(weak: true)
+#right-figs({
+  import meander: *
 
+  placed(top + right, stack(fig-emc-1-burn-in, v(2em), fig-emc-1-samples-likelihood, v(2em), fig-emc-1-samples-acceptance, v(2em), fig-emc-1-samples-autocorrelation))
+  container()
+  content([
+We set up the `ExtendedMetropolisChain` sampler from `nanopinv` with the proposal algorithm given in @alg:preconditioned-crank-nicolson using the previously obtained prior distribution $ρ_m (vv(m))$ and a step size of $δ = 0.05$. An initial model $vv(m)_0$ is drawn directly from the prior distribution and the $N_"iter" = num("1000")$ steps are taken while recording intermediate samples and acceptance decisions. It is highly likely that the sample drawn from the prior distribution will lie in a region of low likelihood, which leads to the burn-in phenomenon shown in @fig:emc-1-burn-in, where the log#{sym.hyph.nobreak}likelihood is observed to decrease rapidly during the initial steps of the chain before stabilising as the chain diffuses towards a higher likelihood region of the model space.
 
-Using these algorithms, we are able to generate a chain of samples from the posterior distribution
+Using JAX it is particularly easy to run multiple chains in parallel using the `vmap` function. This is useful as it allows us to obtain multiple independent samples, and additionally is a useful way to gauge whether the chains get stuck in local minima by comparing the results of multiple chains initialised with different random seeds. By performing $N_"burn-in" = num("3000")$ steps on $N_"chains" = 10$ chains, and subsequently recording another $N_"samples" = num("10 000")$ samples, we are able to produce a large number of samples. Running the cumulative #num("100 000") steps takes approximately 6 minutes and 30 seconds on an NVIDIA RTX 4090 GPU.
 
-The introduction of the inverse temperature, $β$, in @alg:extended-metropolis is of note, as it decreasing this parameter towards zero increases the chance of accept
+Inspecting @fig:emc-1-samples-likelihood reveals that all chains appear to have converged to a similar level set of the likelihood landscape, which is an indication that the chains are not getting stuck in local minima.
+@fig:emc-1-samples-acceptance shows that the acceptance rate is observed to be around $45%$ during the sampling, which is higher than the $25%$ target. This can negatively affect the correlation times and heightens the risk of poor mixing.
+
+As observed in @fig:emc-1-samples-autocorrelation, the autocorrelation of the likelihood roughly follows a decaying exponential with a characteristic decay length of roughly #num("700") steps. We note with caution that the autocorrelation of the _likelihood_ is not perfectly representative of the autocorrelation of the _model parameters_ and may be artificially longer in cases where the proposal along contours of the likelihood landscape. In order to obtain uncorrelated samples we must thin the accepted samples such that the number of steps between recorded samples is greater than some small multiple of the decay length.
+])})
+
+By requiring a minimum interval of #num("2000") steps between recorded samples we obtain a total of #num("50") uncorrelated samples from the posterior distribution, 3 of which are shown in @fig:emc-1-posterior-samples.
+#figure(
+  image("export/emc_1_posterior_samples_100.png"),
+  caption: "Posterior samples obtained by the Extended Metropolis algorithm."
+) <fig:emc-1-posterior-samples>
+
+=== Step size tuning <sec:step-size-tuning>
+
+#let fig-emc-1-tuning = [
+  #box(width: 50%)[
+    #figure(
+      image("export/emc_1_tuning.png"),
+      caption: [
+        Trace of step size during tuning procedure. Red dashed line indicates the initial step size and black dashed line indicates the final step size after tuning.
+      ]
+    ) <fig:emc-1-tuning>
+  ]
+]
+
+As mentioned previously, the choice of step size has significant implications for the efficiency of the sampling. For this reason, `nanopinv` additionally implements a simple step size tuning procedure in which the step size is adjusted iteratively by using batches of $N_"batch"$ samples to compute the update according to the Robbins-Monro algorithm:
+$
+  δ_(k+1) = δ_k + ξ_k (dash(P)_k - P_"target") wide "where" wide ξ_k = ξ_0 / (k + 1)^(-κ)
+$
+#right-figs({
+  import meander: *
+
+  placed(top + right, fig-emc-1-tuning)
+  container()
+  content([
+
+where $ξ_k ∈ (0, 1]$ is a _learning rate_ which we decay from a base value $ξ_0$ according to the batch number $k$ and a decay parameter $κ ∈ (1\/2, 1]$. $P_"target"$ denotes the target acceptance rate and $dash(P)_k$ is the observed acceptance rate for the $k$th batch of samples.
+
+This is implemented in `nanopinv` via the `tune` method of the `ExtendedMetropolisChain` class, which for $κ=0.5, ξ_0=0.1, N_"batch"=num("1000")$ produces the tuning history shown in @fig:emc-1-tuning, which converges to a step size of $δ = num("0.808")$ and achieves a acceptance rate of approximately $25%$.
+
+])})
 
 === Parallel Tempering
 
-=== Hyperparameter Tuning
+The primary bottle-neck of our current simulations are the long correlation times between the samples. While running multiple chains in parallel is a useful workaround, the performance can be further improved by implementing a _parallel tempering_ scheme. In @sec:sampling-posterior we discussed how the inverse temperature, $β$, can flatten the likelihood landscape, thus allowing much larger steps to be taken without compromising the acceptance rate. With this in mind, we can arrange a ladder of chains with increasing temperatures and individual step sizes. Hotter chains will be able to easily traverse any hills in the likelihood landscape and reach all parts of the model space. Unfortunately, the samples drawn from these hotter chains still cannot be used to garner information about the posterior distribution.
+
+Instead, we propose to swap the states of neighbouring chains on the ladder according to a criterion that preserves _detailed balance_ such that the chains remain in equilibrium at all times. This allows the hot chains to lead the charge in exploring the model space while the coldest chain is still able to draw samples from the true posterior distribution. While the full theory behind the parallel tempering scheme is beyond the scope of this report, an accessible description by Paweł Czyż can be found in @bib:czyz.
+
+In particular, the variant of parallel tempering that is implemented in `nanopinv` is the _Deterministic Even Odd_ (DEO) _non-reversible parallel tempering_ (PT) scheme due to Syed et al. @bib:syed, which is outlined in @alg:non-rev-pt where the DEO variant arises when the parity offset $Ξ$ is alternated between $0$ and $1$ for each swap. This approach has the limitation that chain states can only diffuse by at most one rung on the ladder per swap, which puts a lower bound on the number of swaps required to traverse the ladder and thus the correlation time of the samples.
+
+With this in mind, the authors of @bib:syed introduce the notion of the _communication barrier_, which is used to produce a tuning scheme for the temperature ladder, which is optimally tuned when the swapping rate is uniform across all rungs of the ladder. An implementation of this tuning scheme alongside a Robbins-Monro-based tuning scheme akin to that discussed in @sec:step-size-tuning is implemented in `nanopinv`, closely following that presented in @bib:czyz.
+
+#nobreak[
+  #algorithm-figure(
+    "Non-Reversible Parallel Tempering Swap Procedure",
+    vstroke: .5pt + luma(200),
+    inset: 0.35em,
+    {
+      import algorithmic: *
+      let Input(doc) = Line([*input*~#context box(doc, baseline: 100% - par.leading)])
+      let Output(doc) = Line([*output*~#context box(doc, baseline: 100% - par.leading)])
+      let True = smallcaps("true")
+      let False = smallcaps("false")
+
+      Procedure(
+        "AdjacentSwap",
+        ([$N$], [$Ξ$], [$X$], [$L$], [$β$],),
+        {
+          Input([
+            Number of chains $N$, Parity offset $Ξ ∈ {0, 1}$,\
+            Chain states $X = (x_0, ..., x_(N-1))$, Likelihoods $L = (L_0, ..., L_(N-1))$,\
+            Inverse temperatures $β = (β_0, ..., β_(N-1))$
+          ])
+          Output([
+            Updated states $X'$, Updated likelihoods $L'$, Acceptances $A ∈ 𝟙^N$
+          ])
+
+          LineComment(
+            Assign[$A_i$][False $∀ i ∈ {0, ..., N-2}$],
+            [Initialize acceptances]
+          )
+          LineComment(
+            Assign[$X', L'$][$X, L$],
+            [Initialize outputs]
+          )
+
+          For(
+            [$i = 0, ..., N-2$],
+            {
+              If(
+                [$(i mod 2) = Ξ$],
+                {
+                  LineComment(
+                    Assign[$α_i$][$min(1, (L_(i+1) / L_i)^(β_i - β_(i+1)))$],
+                    [Compute acceptance probability]
+                  )
+                  LineComment(
+                    Assign[$u_i$][$u ~ cal(U)(0, 1)$],
+                    [Sample uniform distribution]
+                  )
+                  If(
+                    [$u_i < α_i$],
+                    {
+                      LineComment(
+                        Assign[$A_i$][True],
+                        [Accept swap proposal]
+                      )
+                      LineComment(
+                        Assign[$X'_i, X'_(i+1)$][$X'_(i+1), X'_i$],
+                        [Apply state swap]
+                      )
+                      LineComment(
+                        Assign[$L'_i, L'_(i+1)$][$L'_(i+1), L'_i$],
+                        [Apply likelihood swap]
+                      )
+                    }
+                  )
+                }
+              )
+            }
+          )
+          LineComment(
+            Return[$X', L', A$],
+            [Return updated chains and acceptance outcomes]
+          )
+        }
+      )
+    }
+  ) <alg:non-rev-pt>
+]
+
+The parallel tempering scheme combines with @alg:preconditioned-crank-nicolson and @alg:extended-metropolis by first performing a step of the Extended Metropolis algorithm on each chain in parallel and then performing the non-reversible parallel tempering swap procedure on the ladder of chains.
+
+Importantly, a chain state is considered an _acceptable_ sample of the posterior distribution if it resides on the _cold_ chain after the step and swap and has either been locally updated by the proposal algorithm _or_ has been swapped with its neighbour. Even if the state has just arrived from a hotter chain, it is still considered an acceptable sample as the swap procedure obeys _detailed balance_ and thus the state is still distributed according to the posterior distribution.
+
+While a more elegant approach to jointly tune the step sizes and temperatures of the ladder may exist, we resort to iteratively tuning the step sizes and temperatures separately, which is found to converge well for the data used in this report.
+
+=== Obtaining a Tuned Parallel Tempering Sampler
+
+In order to obtain a tuned parallel tempering sampler we instantiate a ladder of chains and evolve them according to the following procedure:
++ Construct $N_"chains" = 16$ chains:
+  + Initial inverse temperatures: $β_k = ω^(-k)$ where $ω = 2.0 ∈ [1, ∞)$ is a hyperparameter controlling the initial temperature spacing.
+    - As a heuristic, $ω$ should be chosen such that the hottest initial temperature is just hot enough that a chain acceptance rate of $25%$ is reached for a step size of $δ = 1$.
+    - This ensures that the hottest chain is able to explore the model space entirely unhindered and effectively corresponds to drawing proposals directly from the prior distribution at each step.
+    - There is no goldilocks acceptance rate for non-reversible parallel tempering — the acceptance rate will generally be larger for more densely packed temperature ladders, which further lowers the correlation time by improving mixing between the chains.
+  + Initial step sizes: linearly spaced over the range $[0.1, 1.0]$.
+  + Initial states: Draw initial states $vv(m)_0$ from prior $ρ_m (vv(m))$.
++ Burn in: Perform $N_"burn" = num("500")$ steps of the PT scheme.
++ Tune step sizes: Perform 3 batches of $N_"batch" = 300$ steps of the PT scheme and tune the step sizes according to the Robbins-Monro algorithm with $κ=1\/2, ξ_0=1$ and target acceptance rate of $25%$.
++ Tune temperatures: Perform a single batch of $N_"batch" = num("1000")$ steps of the PT scheme and tune the temperatures according to the method outlined in @bib:syed.
++ Tune step sizes: Perform another 5 batches of tuning.
++ Tune temperatures: Perform another 2 batches of tuning.
++ Tune step sizes: Perform another 5 batches of tuning.
++ Tune temperatures: Perform another 2 batches of tuning.
+
+After tuning the sampler is run for another #num("1000") steps to ensure the chains are in equilibrium at the final parameters after which further steps can be recorded as potential samples from the posterior distribution.
+
+=== Validating the `nanopinv` Implementation <sec:validation>
+
+In order to validate the implementation of these algorithms in `nanopinv`, we first tune a parallel tempering sampler as described above and fit an empirical variogram to it in a similar the manner to that of @sec:prior-dist. This variogram is then fitted to a spherical covariance function and found to have a variance $σ^2=num("1.18e-5")$, range $s=5.72$, and a nugget $τ^2=num("1.72e-6")$. The mean of the posterior samples is found to be $μ=num("0.086")$. These are then used to produce a new distribution similar to how the prior distribution was obtained and samples are drawn from it. If the implementation is correct, these samples should have similar isotropic spatial characteristics to true posterior. As such, we may pick a sample that appears physically plausible and where the velocity field is distributed in a manner that can be resolved by the rays traced by the forward model.
 
 
 
 
-=== Porosity and Total Water in Place <sec:physics-porosity>
-
+== Porosity and Total Water in Place <sec:physics-porosity>
 In order to obtain estimates of the Total Water In Place (TWIP) over a region of interest, we first relate the phase velocity of the radar waves to the porosity of the medium, $Φ$, through the following empirical relation:
 $
   Φ = exp(-41.7 v + 2.03).
@@ -488,6 +661,10 @@ $
 where $N_x, N_y$ refer to the number of discretisation points in the $x$ and $y$ directions respectively, and $Δ x, Δ y$ are the corresponding grid spacings.
 
 For the purposes of this report, we define the forward model to be only the solution to the eikonal equation and thus relegate the porosity and TWIP calculations to the post-inversion analysis of the obtained model.
+= Results <sec:results>
+
+= Discussion <sec:discussion>
+
 
 = Conclusion <sec:conclusion>
 We have employed an Iteratively Reweighted Least Squares (IRLS) algorithm with robust reweighting and Ekblom relaxation of the $L_1$-norm to solve the regularised inverse problem of obtaining the Gauss coefficients of the radial magnetic field expansion in a truncated spherical harmonics basis of degree $N=20$. The forward model relies on the assumption of interior sources, and the regularisation is applied to the projection of the model onto the Core-Mantle Boundary (CMB). This model was constructed using data gathered by the ESA Swarm mission in addition to a similar model using $L_2$-regularisation without data reweighting.
