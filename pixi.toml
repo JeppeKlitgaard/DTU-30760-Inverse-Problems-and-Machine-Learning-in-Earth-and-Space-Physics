@@ -23,7 +23,6 @@ astroml = ">=1.0.2.post1,<2"
 scikit-fmm = ">=2025.6.23,<2026"
 hdf5storage = ">=0.1.19,<0.2"
 bspline = ">=0.1.1,<0.2"
-pytorch = ">=2.10.0,<3"
 ipympl = ">=0.10.0,<0.11"
 ffmpeg = ">=8.0.1,<9"
 polars = ">=1.39,<2"
@@ -33,6 +32,7 @@ numba = ">=0.64.0,<0.65"
 ipython = ">=9.11.0,<10"
 colorcet = ">=3.1.0,<4"
 cmcrameri = ">=1.9,<2"
+pytorch-cpu = ">=2.10.0,<3"
 # scikit-sparse = ">=0.4.16,<0.5"  # Conda package not updated :(
 
 [pypi-dependencies]
